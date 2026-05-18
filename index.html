@@ -1,0 +1,1578 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DishLens</title>
+  <style>
+    :root {
+      --bg: #f8f3eb;
+      --surface: #fffaf3;
+      --surface-2: #f0e8dc;
+      --ink: #243126;
+      --muted: #697268;
+      --line: #ded5c8;
+      --green: #2f7d4f;
+      --green-dark: #1f5f3b;
+      --green-soft: #dcebdd;
+      --amber: #b86d22;
+      --amber-soft: #f7e2c5;
+      --danger: #9f312e;
+      --danger-soft: #f5d9d4;
+      --safe: #1f7a50;
+      --shadow: 0 18px 40px rgba(64, 49, 32, 0.13);
+      --radius: 8px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(135deg, rgba(47, 125, 79, 0.12), transparent 32%),
+        linear-gradient(315deg, rgba(184, 109, 34, 0.09), transparent 36%),
+        var(--bg);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      width: min(100%, 1180px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .screen {
+      display: none;
+      min-height: calc(100vh - 48px);
+      animation: rise 240ms ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .welcome-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 440px);
+      gap: 42px;
+      align-items: center;
+      min-height: calc(100vh - 48px);
+    }
+
+    .brand-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      margin-bottom: 22px;
+      border-radius: 16px;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(47, 125, 79, 0.26);
+    }
+
+    .brand-mark svg,
+    .icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: clamp(3rem, 8vw, 5.8rem);
+      line-height: 0.94;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .tagline {
+      margin-bottom: 14px;
+      color: var(--green-dark);
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .lead {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 1.13rem;
+    }
+
+    .phone-frame {
+      overflow: hidden;
+      border: 1px solid rgba(36, 49, 38, 0.08);
+      border-radius: 30px;
+      background: #1e281f;
+      box-shadow: var(--shadow);
+    }
+
+    .phone-visual {
+      min-height: 560px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(255, 250, 243, 0.9)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 640'%3E%3Crect width='420' height='640' fill='%23fffaf3'/%3E%3Ccircle cx='330' cy='76' r='88' fill='%23dcebdd'/%3E%3Ccircle cx='72' cy='552' r='132' fill='%23f7e2c5'/%3E%3Cpath d='M86 170h250M86 220h210M86 270h250M86 320h190' stroke='%23ded5c8' stroke-width='18' stroke-linecap='round'/%3E%3Cpath d='M108 430c48-48 102-48 162 0 30 24 58 32 86 22' stroke='%232f7d4f' stroke-width='18' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+      background-size: cover;
+    }
+
+    .camera-card {
+      height: 330px;
+      border: 1px solid rgba(36, 49, 38, 0.11);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(47, 125, 79, 0.18), transparent 42%),
+        #29342b;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .lens-ring {
+      width: 118px;
+      height: 118px;
+      border: 7px solid rgba(255, 255, 255, 0.78);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      box-shadow: inset 0 0 0 18px rgba(255, 255, 255, 0.12);
+    }
+
+    .auth-card,
+    .panel,
+    .detail-panel {
+      border: 1px solid rgba(36, 49, 38, 0.08);
+      border-radius: 24px;
+      background: rgba(255, 250, 243, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .auth-card {
+      padding: 24px;
+    }
+
+    .action-stack {
+      display: grid;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      min-height: 52px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0 20px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(47, 125, 79, 0.22);
+      background: var(--green-dark);
+    }
+
+    .btn.secondary {
+      border: 1px solid var(--line);
+      background: #fffaf3;
+      color: var(--ink);
+    }
+
+    .btn.secondary:hover {
+      background: var(--surface-2);
+      box-shadow: none;
+    }
+
+    .btn.ghost {
+      min-height: 44px;
+      background: transparent;
+      color: var(--green-dark);
+      box-shadow: none;
+    }
+
+    .btn.small {
+      min-height: 38px;
+      padding: 0 14px;
+      font-size: 0.9rem;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mini-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--green);
+      color: #fff;
+      flex: 0 0 auto;
+    }
+
+    .mini-mark svg,
+    .nav-icon svg,
+    .inline-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="search"] {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 14px;
+      background: #fffdf8;
+      color: var(--ink);
+      outline: 3px solid transparent;
+    }
+
+    input:focus {
+      border-color: var(--green);
+      outline-color: rgba(47, 125, 79, 0.18);
+    }
+
+    .social-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .helper-link {
+      border: 0;
+      background: transparent;
+      color: var(--green-dark);
+      font-weight: 800;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      padding: 8px 0;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 22px;
+    }
+
+    .check-tile {
+      position: relative;
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px 14px 13px 48px;
+      background: #fffdf8;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .check-tile input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .check-tile .tile-icon {
+      position: absolute;
+      left: 14px;
+      top: 16px;
+      color: var(--green-dark);
+    }
+
+    .check-tile:has(input:checked) {
+      border-color: var(--green);
+      background: var(--green-soft);
+      box-shadow: inset 0 0 0 1px var(--green);
+    }
+
+    .toggle-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 22px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      background: #fffdf8;
+      font-weight: 800;
+    }
+
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 30px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      opacity: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #cfc5b7;
+      transition: 160ms ease;
+    }
+
+    .slider::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      transition: 160ms ease;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--green);
+    }
+
+    .switch input:checked + .slider::after {
+      transform: translateX(22px);
+    }
+
+    .scan-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 22px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 50px;
+      min-width: 50px;
+      height: 50px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffdf8;
+      color: var(--ink);
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .camera-preview {
+      position: relative;
+      overflow: hidden;
+      min-height: 580px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(25, 33, 27, 0.08), rgba(25, 33, 27, 0.58)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='860' height='760' viewBox='0 0 860 760'%3E%3Crect width='860' height='760' fill='%23263127'/%3E%3Crect x='170' y='88' width='520' height='620' rx='24' fill='%23fff8ea'/%3E%3Cpath d='M230 170h250M230 220h360M230 270h300M230 342h330M230 392h250M230 464h360M230 514h320M230 586h280' stroke='%237c6f61' stroke-width='18' stroke-linecap='round'/%3E%3Cpath d='M540 170h70M520 342h90M570 586h40' stroke='%232f7d4f' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .scan-corners {
+      position: absolute;
+      inset: 9%;
+      border: 2px solid rgba(255, 255, 255, 0.42);
+      border-radius: 18px;
+    }
+
+    .scan-corners::before,
+    .scan-corners::after {
+      content: "";
+      position: absolute;
+      width: 62px;
+      height: 62px;
+      border-color: #fff;
+      border-style: solid;
+    }
+
+    .scan-corners::before {
+      top: -2px;
+      left: -2px;
+      border-width: 4px 0 0 4px;
+      border-radius: 18px 0 0;
+    }
+
+    .scan-corners::after {
+      right: -2px;
+      bottom: -2px;
+      border-width: 0 4px 4px 0;
+      border-radius: 0 0 18px;
+    }
+
+    .scan-actions {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-note {
+      padding: 22px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 0.9rem;
+      font-weight: 850;
+    }
+
+    .results-shell {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      gap: 22px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .filter-panel {
+      position: sticky;
+      top: 20px;
+    }
+
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dish-list {
+      display: grid;
+      gap: 14px;
+      max-height: calc(100vh - 218px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .dish-card {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: 16px;
+      border: 1px solid rgba(36, 49, 38, 0.08);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fffdf8;
+      box-shadow: 0 10px 24px rgba(64, 49, 32, 0.09);
+    }
+
+    .dish-thumb {
+      width: 112px;
+      height: 112px;
+      border-radius: var(--radius);
+      object-fit: cover;
+      background: var(--surface-2);
+    }
+
+    .dish-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 750;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 850;
+    }
+
+    .badge.risk {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .badge.safe {
+      background: var(--green-soft);
+      color: var(--safe);
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 22px;
+    }
+
+    .hero-image {
+      width: 100%;
+      min-height: 390px;
+      border-radius: 24px;
+      object-fit: cover;
+      box-shadow: var(--shadow);
+      background: var(--surface-2);
+    }
+
+    .detail-panel {
+      padding: 22px;
+    }
+
+    .risk-box {
+      border-radius: var(--radius);
+      padding: 14px;
+      margin: 18px 0;
+      background: var(--green-soft);
+      color: var(--safe);
+      font-weight: 800;
+    }
+
+    .risk-box.warning {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .ingredient-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 20px;
+    }
+
+    .ingredient {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: #fffdf8;
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    .ingredient[data-tip] {
+      border-color: var(--green);
+    }
+
+    .ingredient[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 9px);
+      z-index: 5;
+      width: min(240px, 70vw);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: #243126;
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 650;
+      line-height: 1.35;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(5px);
+      transition: 160ms ease;
+    }
+
+    .ingredient[data-tip]:hover::after,
+    .ingredient[data-tip]:focus::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 16px 0 22px;
+    }
+
+    .nutrition-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fffdf8;
+    }
+
+    .nutrition-item strong {
+      display: block;
+      font-size: 1.12rem;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 22px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .history-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid rgba(36, 49, 38, 0.08);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: #fffdf8;
+      box-shadow: 0 8px 18px rgba(64, 49, 32, 0.08);
+    }
+
+    .empty-state {
+      border: 1px dashed #bcb2a5;
+      border-radius: var(--radius);
+      padding: 18px;
+      color: var(--muted);
+      background: rgba(255, 250, 243, 0.72);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        padding: 16px;
+      }
+
+      .screen {
+        min-height: calc(100vh - 32px);
+      }
+
+      .welcome-layout,
+      .content-grid,
+      .scan-layout,
+      .results-shell,
+      .detail-grid,
+      .history-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .phone-frame {
+        display: none;
+      }
+
+      .filter-panel {
+        position: static;
+      }
+
+      .dish-list {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .topbar,
+      .search-row,
+      .history-card {
+        flex-direction: column;
+      }
+
+      .search-row .icon-btn,
+      .search-row .btn {
+        width: 100%;
+      }
+
+      .check-grid,
+      .social-row,
+      .nutrition-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dish-card {
+        grid-template-columns: 88px minmax(0, 1fr);
+      }
+
+      .dish-thumb {
+        width: 88px;
+        height: 88px;
+      }
+
+      .camera-preview {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section id="welcome" class="screen active" aria-labelledby="welcome-title">
+      <div class="welcome-layout">
+        <div>
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 11a8 8 0 0 1 16 0"/><path d="M3 11h18"/><path d="M6 15h12"/><path d="M8 19h8"/><path d="M12 3v4"/></svg>
+          </div>
+          <h1 id="welcome-title">DishLens</h1>
+          <p class="tagline">Understand Any Menu Anywhere</p>
+          <p class="lead">Scan restaurant menus, visualize dishes, and check ingredients instantly.</p>
+          <div class="action-stack" aria-label="Account options">
+            <button class="btn" data-go="signup">Sign Up</button>
+            <button class="btn" data-go="signin">Sign In</button>
+            <button class="btn secondary" data-go="scan">Continue as Guest</button>
+          </div>
+        </div>
+        <aside class="phone-frame" aria-label="DishLens menu scanning preview">
+          <div class="phone-visual">
+            <div class="camera-card">
+              <div>
+                <div class="lens-ring"></div>
+                <strong>Point at a menu</strong>
+                <p class="muted" style="color:#e8efe8;margin:8px 0 0;">Instant dish previews and ingredient checks.</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="signup" class="screen" aria-labelledby="signup-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" data-go="welcome" aria-label="Back to welcome">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+          </button>
+          <div>
+            <h2 id="signup-title">Create Account</h2>
+            <p class="muted">Save preferences and reopen menus later.</p>
+          </div>
+        </div>
+      </div>
+      <div class="content-grid">
+        <div class="auth-card">
+          <form class="form" id="signup-form">
+            <label>Email <input type="email" autocomplete="email" placeholder="you@example.com" required></label>
+            <label>Password <input type="password" autocomplete="new-password" placeholder="Minimum 8 characters" required></label>
+            <label>Confirm password <input type="password" autocomplete="new-password" placeholder="Re-enter password" required></label>
+            <button class="btn" type="submit">Create Account</button>
+          </form>
+          <div class="social-row">
+            <button class="btn secondary" data-go="preferences">Google</button>
+            <button class="btn secondary" data-go="preferences">Apple</button>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="status-pill">Designed for quick restaurant decisions</span>
+          <h3 style="margin-top:18px;">Your menu companion</h3>
+          <p class="muted">DishLens keeps ingredient risk, nutrition, and plain-language dish explanations close at hand.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="signin" class="screen" aria-labelledby="signin-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" data-go="welcome" aria-label="Back to welcome">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+          </button>
+          <div>
+            <h2 id="signin-title">Welcome Back</h2>
+            <p class="muted">Open your saved restaurants and dishes.</p>
+          </div>
+        </div>
+      </div>
+      <div class="content-grid">
+        <div class="auth-card">
+          <form class="form" id="signin-form">
+            <label>Email <input type="email" autocomplete="email" placeholder="you@example.com" required></label>
+            <label>Password <input type="password" autocomplete="current-password" placeholder="Your password" required></label>
+            <button class="btn" type="submit">Sign In</button>
+          </form>
+          <button class="helper-link" type="button">Forgot password?</button>
+          <br>
+          <button class="helper-link" type="button" data-go="welcome">Back to welcome</button>
+        </div>
+        <div class="panel">
+          <h3>Saved preferences ready</h3>
+          <p class="muted">Filters use your allergy and dietary profile to flag dishes before you order.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="preferences" class="screen" aria-labelledby="prefs-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <span class="mini-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 7 9 18l-5-5"/></svg></span>
+          <div>
+            <h2 id="prefs-title">Allergy & Dietary Preferences</h2>
+            <p class="muted">Choose what DishLens should watch for.</p>
+          </div>
+        </div>
+        <button class="btn ghost" data-go="scan">Skip</button>
+      </div>
+      <div class="content-grid">
+        <div class="panel">
+          <h3>Allergies</h3>
+          <div class="check-grid" id="allergy-options"></div>
+          <button class="btn" id="save-preferences">Save Preferences</button>
+        </div>
+        <div class="panel">
+          <h3>Dietary Preferences</h3>
+          <div class="toggle-list" id="diet-options"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scan" class="screen" aria-labelledby="scan-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <span class="mini-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11a8 8 0 0 1 16 0"/><path d="M3 11h18"/><path d="M6 15h12"/><path d="M8 19h8"/></svg></span>
+          <div>
+            <h2 id="scan-title">Scan Menu</h2>
+            <p class="muted">Fast capture for dim tables and busy service.</p>
+          </div>
+        </div>
+        <button class="btn secondary small" data-go="welcome">Account</button>
+      </div>
+      <div class="scan-layout">
+        <div>
+          <div class="search-row" style="margin-bottom:14px;">
+            <input id="history-search-top" type="search" placeholder="Search history" aria-label="Search history">
+            <button class="icon-btn" data-go="history" aria-label="Open history">
+              <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/><path d="M12 7v5l3 2"/></svg></span>
+            </button>
+          </div>
+          <div class="camera-preview" role="img" aria-label="Camera preview showing a restaurant menu">
+            <div class="scan-corners"></div>
+            <div class="scan-actions">
+              <button class="btn" id="scan-menu">Scan Menu</button>
+              <button class="btn secondary" id="upload-photo">Upload Photo</button>
+            </div>
+          </div>
+        </div>
+        <aside class="panel side-note">
+          <span class="status-pill">Lens ready</span>
+          <h3 style="margin-top:18px;">Current profile</h3>
+          <p id="profile-summary" class="muted">No saved restrictions yet.</p>
+          <h3>Recent scan</h3>
+          <p class="muted">Mercado Verde, Barcelona. Tap scan to view translated menu cards.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="results" class="screen" aria-labelledby="results-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" data-go="scan" aria-label="Back to scanner">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+          </button>
+          <div>
+            <h2 id="results-title">Mercado Verde</h2>
+            <p class="muted">Translated Spanish menu with ingredient checks.</p>
+          </div>
+        </div>
+      </div>
+      <div class="search-row" style="margin-bottom:16px;">
+        <input id="dish-search" type="search" placeholder="Search dish" aria-label="Search dish">
+        <button class="icon-btn" id="toggle-filter" aria-label="Toggle allergy filter panel">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></span>
+        </button>
+      </div>
+      <div class="results-shell">
+        <aside class="panel filter-panel" id="filter-panel">
+          <div class="panel-title-row">
+            <h3>Allergy Filters</h3>
+            <span class="badge safe">Active</span>
+          </div>
+          <div class="toggle-list" id="filter-options"></div>
+          <label class="toggle-row">
+            <span>Hide unsafe dishes</span>
+            <span class="switch"><input id="hide-unsafe" type="checkbox"><span class="slider"></span></span>
+          </label>
+        </aside>
+        <div>
+          <div class="dish-list" id="dish-list" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="detail" class="screen" aria-labelledby="detail-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" data-go="results" aria-label="Back to results">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+          </button>
+          <div>
+            <h2 id="detail-title">Dish Detail</h2>
+            <p class="muted">Ingredient clarity before you order.</p>
+          </div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <img id="detail-image" class="hero-image" alt="">
+        <article class="detail-panel">
+          <div class="panel-title-row">
+            <div>
+              <h2 id="detail-name" style="font-size:2rem;"></h2>
+              <span id="detail-cuisine" class="badge"></span>
+            </div>
+            <span id="detail-calories" class="badge safe"></span>
+          </div>
+          <div id="detail-risk" class="risk-box"></div>
+          <h3>Ingredients</h3>
+          <div class="ingredient-list" id="ingredient-list"></div>
+          <h3>Nutrition</h3>
+          <div class="nutrition-grid" id="nutrition-grid"></div>
+          <button class="btn" id="save-detail">Save Dish</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="history" class="screen" aria-labelledby="history-title">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn" data-go="scan" aria-label="Back to scanner">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></span>
+          </button>
+          <div>
+            <h2 id="history-title">History</h2>
+            <p class="muted">Saved restaurants and dishes.</p>
+          </div>
+        </div>
+      </div>
+      <div class="search-row" style="margin-bottom:16px;">
+        <input id="history-search" type="search" placeholder="Search saved items" aria-label="Search saved items">
+      </div>
+      <div class="history-grid">
+        <section class="panel">
+          <h3>Saved Restaurants</h3>
+          <div id="restaurant-history" class="history-list"></div>
+        </section>
+        <section class="panel">
+          <h3>Saved Dishes</h3>
+          <div id="dish-history" class="history-list"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHlA3ycSceUeb4Fy1mPk96EZHl4xSlrVNyVazoIjhQoY0PrZ1AsolyjKprFot9AwOW/exec";
+    const screens = [...document.querySelectorAll(".screen")];
+    const allergies = ["Nuts", "Dairy", "Gluten", "Shellfish", "Soy"];
+    const diets = ["Vegetarian", "Vegan", "Halal", "Kosher", "Low calorie"];
+    const state = {
+      pendingSignup: null,
+      currentUserEmail: "",
+      allergies: new Set(["Dairy", "Shellfish"]),
+      diets: new Set(["Vegetarian"]),
+      filters: new Set(["Dairy", "Shellfish"]),
+      hideUnsafe: false,
+      currentDish: null,
+      savedRestaurants: [
+        { id: "mercado-verde", name: "Mercado Verde", place: "Barcelona", date: "Today" }
+      ],
+      savedDishes: []
+    };
+
+    const icon = {
+      nut: '<svg viewBox="0 0 24 24"><path d="M12 5c4 1 7 4 7 8 0 5-4 8-8 8s-7-3-7-7c0-5 4-8 8-9Z"/><path d="M9 9c2 1 4 3 5 6"/></svg>',
+      milk: '<svg viewBox="0 0 24 24"><path d="M9 2h6"/><path d="M10 2v5l-2 3v10h8V10l-2-3V2"/></svg>',
+      grain: '<svg viewBox="0 0 24 24"><path d="M12 21V3"/><path d="M12 7c-3 0-5-2-5-4"/><path d="M12 11c-3 0-5-2-5-4"/><path d="M12 15c-3 0-5-2-5-4"/><path d="M12 7c3 0 5-2 5-4"/><path d="M12 11c3 0 5-2 5-4"/><path d="M12 15c3 0 5-2 5-4"/></svg>',
+      shell: '<svg viewBox="0 0 24 24"><path d="M4 18c2-8 6-12 8-12s6 4 8 12"/><path d="M4 18h16"/><path d="M12 6v12"/><path d="M7 15l10-7"/><path d="M17 15 7 8"/></svg>',
+      leaf: '<svg viewBox="0 0 24 24"><path d="M20 4c-8 1-13 5-14 12 7 1 12-3 14-12Z"/><path d="M6 16c2-3 5-5 9-7"/></svg>'
+    };
+
+    const dishes = [
+      {
+        id: "paella-marina",
+        name: "Paella Marina",
+        cuisine: "Spanish coastal",
+        calories: 680,
+        description: "Saffron rice with shrimp, mussels, peppers, and peas.",
+        allergies: ["Shellfish"],
+        ingredients: [
+          ["Bomba rice", "Short-grain Spanish rice that absorbs broth while staying firm."],
+          ["Shrimp", ""],
+          ["Mussels", ""],
+          ["Saffron", "A floral spice that gives paella its golden color."],
+          ["Sofrito", "A slow-cooked tomato, onion, and pepper base."]
+        ],
+        nutrition: { Protein: "34g", Carbs: "82g", Fat: "21g" },
+        colors: ["#d9912b", "#2f7d4f", "#f2d071"]
+      },
+      {
+        id: "gnocchi-verde",
+        name: "Gnocchi Verde",
+        cuisine: "Italian",
+        calories: 620,
+        description: "Potato dumplings in basil cream with aged cheese.",
+        allergies: ["Dairy", "Gluten"],
+        ingredients: [
+          ["Gnocchi", "Soft potato dumplings, often made with wheat flour."],
+          ["Basil cream", ""],
+          ["Parmigiano", "A hard aged Italian cheese with a salty, nutty flavor."],
+          ["Pine nuts", ""],
+          ["Spinach", ""]
+        ],
+        nutrition: { Protein: "18g", Carbs: "74g", Fat: "27g" },
+        colors: ["#79a65a", "#fff0c8", "#d7b36a"]
+      },
+      {
+        id: "tagine-zaytoon",
+        name: "Tagine Zaytoon",
+        cuisine: "Moroccan",
+        calories: 540,
+        description: "Slow-cooked vegetables, olives, chickpeas, and preserved lemon.",
+        allergies: [],
+        ingredients: [
+          ["Chickpeas", ""],
+          ["Preserved lemon", "Lemon cured in salt, adding bright and savory flavor."],
+          ["Green olives", ""],
+          ["Ras el hanout", "A Moroccan spice blend, often warm, aromatic, and mildly sweet."],
+          ["Carrots", ""]
+        ],
+        nutrition: { Protein: "19g", Carbs: "68g", Fat: "18g" },
+        colors: ["#c17f35", "#6f8b48", "#f1c75c"]
+      },
+      {
+        id: "miso-nasu",
+        name: "Miso Nasu",
+        cuisine: "Japanese",
+        calories: 430,
+        description: "Glazed eggplant with miso, sesame, rice, and scallions.",
+        allergies: ["Soy"],
+        ingredients: [
+          ["Eggplant", ""],
+          ["Miso", "Fermented soybean paste with savory umami depth."],
+          ["Sesame", ""],
+          ["Steamed rice", ""],
+          ["Scallions", ""]
+        ],
+        nutrition: { Protein: "13g", Carbs: "61g", Fat: "14g" },
+        colors: ["#5c4a72", "#d2a247", "#89a85e"]
+      },
+      {
+        id: "pollo-mole",
+        name: "Pollo Mole",
+        cuisine: "Mexican",
+        calories: 710,
+        description: "Chicken in chile-cacao sauce with sesame and warm spices.",
+        allergies: ["Nuts"],
+        ingredients: [
+          ["Chicken", ""],
+          ["Mole", "A complex Mexican sauce made with chiles, spices, and often nuts or seeds."],
+          ["Cacao", ""],
+          ["Sesame", ""],
+          ["Corn tortillas", ""]
+        ],
+        nutrition: { Protein: "42g", Carbs: "58g", Fat: "32g" },
+        colors: ["#7f3f2b", "#cfa154", "#6e8d45"]
+      }
+    ];
+
+    function dishImage(dish, large = false) {
+      const [a, b, c] = dish.colors;
+      const size = large ? [900, 620] : [240, 240];
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${size[0]} ${size[1]}">
+          <rect width="100%" height="100%" fill="#fff4e3"/>
+          <circle cx="${size[0] * 0.78}" cy="${size[1] * 0.18}" r="${size[1] * 0.23}" fill="${c}" opacity=".52"/>
+          <circle cx="${size[0] * 0.2}" cy="${size[1] * 0.82}" r="${size[1] * 0.28}" fill="${b}" opacity=".24"/>
+          <ellipse cx="${size[0] / 2}" cy="${size[1] * 0.55}" rx="${size[0] * 0.34}" ry="${size[1] * 0.27}" fill="#fdfaf3" stroke="#d8caba" stroke-width="10"/>
+          <ellipse cx="${size[0] / 2}" cy="${size[1] * 0.55}" rx="${size[0] * 0.24}" ry="${size[1] * 0.18}" fill="${a}"/>
+          <circle cx="${size[0] * 0.43}" cy="${size[1] * 0.48}" r="${size[1] * 0.055}" fill="${b}"/>
+          <circle cx="${size[0] * 0.56}" cy="${size[1] * 0.6}" r="${size[1] * 0.048}" fill="${c}"/>
+          <path d="M${size[0] * 0.34} ${size[1] * 0.62} C${size[0] * 0.46} ${size[1] * 0.42}, ${size[0] * 0.58} ${size[1] * 0.78}, ${size[0] * 0.7} ${size[1] * 0.52}" fill="none" stroke="#243126" stroke-width="8" opacity=".35" stroke-linecap="round"/>
+          <text x="${size[0] * 0.5}" y="${size[1] * 0.16}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${large ? 42 : 18}" font-weight="700" fill="#243126">${dish.name}</text>
+        </svg>`;
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+    function go(screenId) {
+      screens.forEach(screen => screen.classList.toggle("active", screen.id === screenId));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (screenId === "results") renderDishes();
+      if (screenId === "detail") renderDetail();
+      if (screenId === "history") renderHistory();
+      if (screenId === "scan") updateProfileSummary();
+    }
+
+    function riskFor(dish) {
+      return dish.allergies.filter(item => state.filters.has(item));
+    }
+
+    function toBool(value) {
+      return value === true || value === "TRUE" || value === "true" || value === 1 || value === "1";
+    }
+
+    function getSelectedPreferences() {
+      const selectedAllergies = new Set([...document.querySelectorAll("[data-allergy]:checked")].map(item => item.dataset.allergy));
+      const selectedDiets = new Set([...document.querySelectorAll("[data-diet]:checked")].map(item => item.dataset.diet));
+
+      return {
+        allergies: selectedAllergies,
+        diets: selectedDiets,
+        payload: {
+          allergy_nuts: selectedAllergies.has("Nuts"),
+          allergy_dairy: selectedAllergies.has("Dairy"),
+          allergy_gluten: selectedAllergies.has("Gluten"),
+          allergy_shellfish: selectedAllergies.has("Shellfish"),
+          allergy_soy: selectedAllergies.has("Soy"),
+          pref_vegetarian: selectedDiets.has("Vegetarian"),
+          pref_vegan: selectedDiets.has("Vegan"),
+          pref_halal: selectedDiets.has("Halal"),
+          pref_kosher: selectedDiets.has("Kosher"),
+          pref_low_calorie: selectedDiets.has("Low calorie")
+        }
+      };
+    }
+
+    function sendToSheet(payload) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `dishLensCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const url = new URL(GOOGLE_SCRIPT_URL);
+
+        Object.entries(payload).forEach(([key, value]) => {
+          url.searchParams.set(key, value);
+        });
+        url.searchParams.set("callback", callbackName);
+
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error("Google Sheets request timed out."));
+        }, 12000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          script.remove();
+          delete window[callbackName];
+        }
+
+        window[callbackName] = result => {
+          cleanup();
+          resolve(result);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Google Sheets request failed."));
+        };
+
+        script.src = url.toString();
+        document.body.appendChild(script);
+      });
+    }
+
+    function applySheetPreferences(data) {
+      state.allergies = new Set([
+        toBool(data.allergy_nuts) && "Nuts",
+        toBool(data.allergy_dairy) && "Dairy",
+        toBool(data.allergy_gluten) && "Gluten",
+        toBool(data.allergy_shellfish) && "Shellfish",
+        toBool(data.allergy_soy) && "Soy"
+      ].filter(Boolean));
+
+      state.diets = new Set([
+        toBool(data.pref_vegetarian) && "Vegetarian",
+        toBool(data.pref_vegan) && "Vegan",
+        toBool(data.pref_halal) && "Halal",
+        toBool(data.pref_kosher) && "Kosher",
+        toBool(data.pref_low_calorie) && "Low calorie"
+      ].filter(Boolean));
+
+      state.filters = new Set(state.allergies);
+      renderPreferenceSetup();
+      updateProfileSummary();
+    }
+
+    function setButtonBusy(button, label) {
+      button.dataset.originalText = button.textContent;
+      button.textContent = label;
+      button.disabled = true;
+    }
+
+    function clearButtonBusy(button) {
+      button.textContent = button.dataset.originalText || button.textContent;
+      button.disabled = false;
+    }
+
+    function renderPreferenceSetup() {
+      const allergyOptions = document.querySelector("#allergy-options");
+      allergyOptions.innerHTML = allergies.map(item => {
+        const iconSvg = item === "Nuts" ? icon.nut : item === "Dairy" ? icon.milk : item === "Gluten" ? icon.grain : item === "Shellfish" ? icon.shell : icon.leaf;
+        return `<label class="check-tile"><span class="tile-icon inline-icon">${iconSvg}</span>${item}<input type="checkbox" data-allergy="${item}" ${state.allergies.has(item) ? "checked" : ""}></label>`;
+      }).join("");
+
+      document.querySelector("#diet-options").innerHTML = diets.map(item => `
+        <label class="toggle-row">
+          <span>${item}</span>
+          <span class="switch"><input type="checkbox" data-diet="${item}" ${state.diets.has(item) ? "checked" : ""}><span class="slider"></span></span>
+        </label>
+      `).join("");
+    }
+
+    function renderFilters() {
+      document.querySelector("#filter-options").innerHTML = allergies.map(item => `
+        <label class="toggle-row">
+          <span>${item}</span>
+          <span class="switch"><input type="checkbox" data-filter="${item}" ${state.filters.has(item) ? "checked" : ""}><span class="slider"></span></span>
+        </label>
+      `).join("");
+      document.querySelector("#hide-unsafe").checked = state.hideUnsafe;
+    }
+
+    function renderDishes() {
+      renderFilters();
+      const query = document.querySelector("#dish-search").value.trim().toLowerCase();
+      const list = document.querySelector("#dish-list");
+      const visible = dishes.filter(dish => {
+        const matches = !query || dish.name.toLowerCase().includes(query) || dish.description.toLowerCase().includes(query);
+        const unsafe = riskFor(dish).length > 0;
+        return matches && !(state.hideUnsafe && unsafe);
+      });
+
+      list.innerHTML = visible.length ? visible.map(dish => {
+        const risk = riskFor(dish);
+        return `
+          <article class="dish-card">
+            <img class="dish-thumb" src="${dishImage(dish)}" alt="AI generated preview of ${dish.name}">
+            <div>
+              <h3>${dish.name}</h3>
+              <div class="dish-meta">
+                <span>~${dish.calories} kcal</span>
+                ${risk.length ? `<span class="badge risk">Allergy risk: ${risk.join(", ")}</span>` : `<span class="badge safe">No saved allergy match</span>`}
+              </div>
+              <p class="muted" style="margin-bottom:0;">${dish.description}</p>
+              <div class="card-actions">
+                <button class="btn small" data-detail="${dish.id}">View Details</button>
+                <button class="btn secondary small" data-save-dish="${dish.id}">Save to History</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("") : `<div class="empty-state">No dishes match your search and filter settings.</div>`;
+    }
+
+    function renderDetail() {
+      const dish = state.currentDish || dishes[0];
+      state.currentDish = dish;
+      const risk = riskFor(dish);
+      document.querySelector("#detail-image").src = dishImage(dish, true);
+      document.querySelector("#detail-image").alt = `AI generated hero image of ${dish.name}`;
+      document.querySelector("#detail-title").textContent = dish.name;
+      document.querySelector("#detail-name").textContent = dish.name;
+      document.querySelector("#detail-cuisine").textContent = dish.cuisine;
+      document.querySelector("#detail-calories").textContent = `~${dish.calories} kcal`;
+      const riskBox = document.querySelector("#detail-risk");
+      riskBox.classList.toggle("warning", risk.length > 0);
+      riskBox.textContent = risk.length
+        ? `Allergy warning: this dish may contain ${risk.join(", ")}. Ask the restaurant before ordering.`
+        : "No conflicts found with your active allergy filters.";
+      document.querySelector("#ingredient-list").innerHTML = dish.ingredients.map(([name, tip]) =>
+        `<button class="ingredient" ${tip ? `data-tip="${tip}"` : ""}>${name}</button>`
+      ).join("");
+      document.querySelector("#nutrition-grid").innerHTML = [
+        ["Calories", `${dish.calories}`],
+        ["Protein", dish.nutrition.Protein],
+        ["Carbs", dish.nutrition.Carbs],
+        ["Fat", dish.nutrition.Fat]
+      ].map(([label, value]) => `<div class="nutrition-item"><strong>${value}</strong><span class="muted">${label}</span></div>`).join("");
+    }
+
+    function saveDish(dishId) {
+      const dish = dishes.find(item => item.id === dishId);
+      if (!dish || state.savedDishes.some(item => item.id === dish.id)) return;
+      state.savedDishes.push({ id: dish.id, name: dish.name, calories: dish.calories, restaurant: "Mercado Verde" });
+    }
+
+    function renderHistory() {
+      const query = document.querySelector("#history-search").value.trim().toLowerCase();
+      const restaurants = state.savedRestaurants.filter(item => !query || item.name.toLowerCase().includes(query) || item.place.toLowerCase().includes(query));
+      const savedDishes = state.savedDishes.filter(item => !query || item.name.toLowerCase().includes(query) || item.restaurant.toLowerCase().includes(query));
+      document.querySelector("#restaurant-history").innerHTML = restaurants.length ? restaurants.map(item => `
+        <article class="history-card">
+          <div>
+            <strong>${item.name}</strong>
+            <p class="muted" style="margin:4px 0 0;">${item.place} - ${item.date}</p>
+          </div>
+          <button class="btn small" data-go="results">Reopen</button>
+        </article>
+      `).join("") : `<div class="empty-state">No saved restaurants found.</div>`;
+      document.querySelector("#dish-history").innerHTML = savedDishes.length ? savedDishes.map(item => `
+        <article class="history-card">
+          <div>
+            <strong>${item.name}</strong>
+            <p class="muted" style="margin:4px 0 0;">${item.restaurant} - ~${item.calories} kcal</p>
+          </div>
+          <button class="btn secondary small" data-delete-dish="${item.id}">Delete</button>
+        </article>
+      `).join("") : `<div class="empty-state">Saved dishes will appear here.</div>`;
+    }
+
+    function updateProfileSummary() {
+      const allergyText = state.allergies.size ? `Allergies: ${[...state.allergies].join(", ")}` : "No allergies saved";
+      const dietText = state.diets.size ? `Preferences: ${[...state.diets].join(", ")}` : "No dietary preferences saved";
+      document.querySelector("#profile-summary").textContent = `${allergyText}. ${dietText}.`;
+    }
+
+    document.addEventListener("click", event => {
+      const goTarget = event.target.closest("[data-go]");
+      if (goTarget) go(goTarget.dataset.go);
+
+      const detailTarget = event.target.closest("[data-detail]");
+      if (detailTarget) {
+        state.currentDish = dishes.find(dish => dish.id === detailTarget.dataset.detail);
+        go("detail");
+      }
+
+      const saveTarget = event.target.closest("[data-save-dish]");
+      if (saveTarget) {
+        saveDish(saveTarget.dataset.saveDish);
+        saveTarget.textContent = "Saved";
+      }
+
+      const deleteTarget = event.target.closest("[data-delete-dish]");
+      if (deleteTarget) {
+        state.savedDishes = state.savedDishes.filter(item => item.id !== deleteTarget.dataset.deleteDish);
+        renderHistory();
+      }
+    });
+
+    document.querySelector("#signup-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const [emailInput, passwordInput, confirmInput] = form.querySelectorAll("input");
+
+      if (passwordInput.value !== confirmInput.value) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      state.pendingSignup = {
+        email: emailInput.value.trim(),
+        password: passwordInput.value
+      };
+      state.currentUserEmail = state.pendingSignup.email;
+      go("preferences");
+    });
+
+    document.querySelector("#signin-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const button = form.querySelector("button");
+      const [emailInput, passwordInput] = form.querySelectorAll("input");
+
+      setButtonBusy(button, "Signing in...");
+      try {
+        const result = await sendToSheet({
+          action: "signin",
+          email: emailInput.value.trim(),
+          password: passwordInput.value
+        });
+
+        if (!result.ok) {
+          alert(result.message || "Sign in failed.");
+          return;
+        }
+
+        state.currentUserEmail = result.email || emailInput.value.trim();
+        applySheetPreferences(result);
+        go("scan");
+      } catch (error) {
+        alert("Could not reach Google Sheets. Check your Apps Script deployment and try again.");
+      } finally {
+        clearButtonBusy(button);
+      }
+    });
+
+    document.querySelector("#save-preferences").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const selected = getSelectedPreferences();
+      state.allergies = selected.allergies;
+      state.filters = new Set(state.allergies);
+      state.diets = selected.diets;
+
+      if (!state.pendingSignup) {
+        go("scan");
+        return;
+      }
+
+      setButtonBusy(button, "Saving...");
+      try {
+        const result = await sendToSheet({
+          action: "signup",
+          email: state.pendingSignup.email,
+          password: state.pendingSignup.password,
+          ...selected.payload
+        });
+
+        if (!result.ok) {
+          alert(result.message || "Could not create account.");
+          return;
+        }
+
+        state.pendingSignup = null;
+        go("scan");
+      } catch (error) {
+        alert("Could not save to Google Sheets. Check your Apps Script deployment and try again.");
+      } finally {
+        clearButtonBusy(button);
+      }
+    });
+
+    document.querySelector("#scan-menu").addEventListener("click", () => go("results"));
+    document.querySelector("#upload-photo").addEventListener("click", () => go("results"));
+    document.querySelector("#dish-search").addEventListener("input", renderDishes);
+    document.querySelector("#history-search").addEventListener("input", renderHistory);
+    document.querySelector("#history-search-top").addEventListener("focus", () => go("history"));
+    document.querySelector("#toggle-filter").addEventListener("click", () => document.querySelector("#filter-panel").classList.toggle("hidden"));
+    document.querySelector("#hide-unsafe").addEventListener("change", event => {
+      state.hideUnsafe = event.target.checked;
+      renderDishes();
+    });
+    document.querySelector("#filter-options").addEventListener("change", event => {
+      if (!event.target.matches("[data-filter]")) return;
+      if (event.target.checked) state.filters.add(event.target.dataset.filter);
+      else state.filters.delete(event.target.dataset.filter);
+      renderDishes();
+    });
+    document.querySelector("#save-detail").addEventListener("click", event => {
+      saveDish(state.currentDish.id);
+      event.target.textContent = "Saved";
+    });
+
+    renderPreferenceSetup();
+    updateProfileSummary();
+  </script>
+</body>
+</html>
