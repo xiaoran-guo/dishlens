@@ -69,6 +69,11 @@
       display: block;
     }
 
+    #welcome {
+      position: relative;
+      padding-top: 54px;
+    }
+
     @keyframes rise {
       from {
         opacity: 0;
@@ -208,6 +213,36 @@
       display: grid;
       gap: 12px;
       margin-top: 30px;
+    }
+
+    .language-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 4;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px;
+      background: rgba(255, 250, 243, 0.86);
+      box-shadow: 0 10px 22px rgba(64, 49, 32, 0.08);
+    }
+
+    .language-toggle button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 14px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .language-toggle button.active {
+      background: var(--green);
+      color: #fff;
     }
 
     .btn {
@@ -640,6 +675,20 @@
       font-weight: 750;
     }
 
+    .english-name,
+    .ingredient-original {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .detail-panel .english-name {
+      font-size: 0.95rem;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -840,6 +889,15 @@
     }
 
     @media (max-width: 560px) {
+      #welcome {
+        padding-top: 64px;
+      }
+
+      .language-toggle {
+        top: 0;
+        right: 0;
+      }
+
       .topbar {
         align-items: flex-start;
       }
@@ -879,6 +937,10 @@
 <body>
   <main class="app-shell">
     <section id="welcome" class="screen active" aria-labelledby="welcome-title">
+      <div class="language-toggle" aria-label="Language">
+        <button class="active" type="button" data-lang="en">English</button>
+        <button type="button" data-lang="zh">中文</button>
+      </div>
       <div class="welcome-layout">
         <div>
           <div class="brand-mark" aria-hidden="true">
@@ -1136,7 +1198,303 @@
     const screens = [...document.querySelectorAll(".screen")];
     const allergies = ["Nuts", "Dairy", "Gluten", "Shellfish", "Soy"];
     const diets = ["Vegetarian", "Vegan", "Halal", "Kosher", "Low calorie"];
+    const translations = {
+      en: {
+        tagline: "Understand Any Menu Anywhere",
+        lead: "Scan restaurant menus, visualize dishes, and check ingredients instantly.",
+        signup: "Sign Up",
+        signin: "Sign In",
+        guest: "Continue as Guest",
+        pointMenu: "Point at a menu",
+        instantPreview: "Instant dish previews and ingredient checks.",
+        createAccount: "Create Account",
+        savePrefsReopen: "Save preferences and reopen menus later.",
+        email: "Email",
+        password: "Password",
+        confirmPassword: "Confirm password",
+        minPassword: "Minimum 8 characters",
+        reenterPassword: "Re-enter password",
+        createAccountButton: "Create Account",
+        quickDecisions: "Designed for quick restaurant decisions",
+        companion: "Your menu companion",
+        companionCopy: "DishLens keeps ingredient risk, nutrition, and plain-language dish explanations close at hand.",
+        welcomeBack: "Welcome Back",
+        openSaved: "Open your saved restaurants and dishes.",
+        yourPassword: "Your password",
+        forgotPassword: "Forgot password?",
+        backWelcome: "Back to welcome",
+        savedReady: "Saved preferences ready",
+        savedReadyCopy: "Filters use your allergy and dietary profile to flag dishes before you order.",
+        prefsTitle: "Allergy & Dietary Preferences",
+        prefsCopy: "Choose what DishLens should watch for.",
+        skip: "Skip",
+        allergies: "Allergies",
+        dietPrefs: "Dietary Preferences",
+        savePreferences: "Save Preferences",
+        scanMenu: "Scan Menu",
+        scanCopy: "Fast capture for dim tables and busy service.",
+        account: "Account",
+        searchHistory: "Search history",
+        cameraReadyInitial: "Tap Scan Menu to open the camera.",
+        uploadPhoto: "Upload Photo",
+        lensReady: "Lens ready",
+        currentProfile: "Current profile",
+        noRestrictions: "No saved restrictions yet.",
+        recentScan: "Recent scan",
+        recentScanCopy: "Mercado Verde, Barcelona. Tap scan to view translated menu cards.",
+        resultsCopy: "Translated Spanish menu with ingredient checks.",
+        searchDish: "Search dish",
+        allergyFilters: "Allergy Filters",
+        active: "Active",
+        hideUnsafe: "Hide unsafe dishes",
+        dishDetail: "Dish Detail",
+        detailCopy: "Ingredient clarity before you order.",
+        ingredients: "Ingredients",
+        nutrition: "Nutrition",
+        saveDish: "Save Dish",
+        history: "History",
+        historyCopy: "Saved restaurants and dishes.",
+        searchSaved: "Search saved items",
+        savedRestaurants: "Saved Restaurants",
+        savedDishes: "Saved Dishes",
+        reopen: "Reopen",
+        delete: "Delete",
+        safeFilters: "Safe for active filters",
+        viewDetails: "View Details",
+        saveToHistory: "Save to History",
+        noDishMatches: "No dishes match your search and filter settings.",
+        noRestaurants: "No saved restaurants found.",
+        noDishes: "Saved dishes will appear here.",
+        allergyRisk: "Allergy risk",
+        dietConflict: "Diet conflict",
+        noConflicts: "No conflicts found with your active allergy or dietary filters.",
+        askBeforeOrdering: "Ask the restaurant before ordering.",
+        calories: "Calories",
+        protein: "Protein",
+        carbs: "Carbs",
+        fat: "Fat",
+        preferences: "Preferences",
+        noAllergies: "No allergies saved",
+        noPrefs: "No dietary preferences saved",
+        saved: "Saved",
+        signingIn: "Signing in...",
+        saving: "Saving...",
+        scanning: "Scanning...",
+        openingCamera: "Opening camera...",
+        captureRead: "Capture & Read",
+        sharpening: "Sharpening menu text...",
+        readingMenu: "Reading menu",
+        readingAgain: "Reading menu again",
+        alternateOcr: "Trying alternate OCR layout...",
+        matchingPhotos: "Matching dish photos...",
+        noClearDishesStatus: "Could not find clear dish names. Showing sample menu.",
+        ocrNoDishes: "OCR finished, but no clear dish names were found. Try a sharper photo or brighter lighting.",
+        foundItems: count => `Found ${count} menu items.`,
+        ocrFailed: "OCR failed. Showing sample menu.",
+        couldNotScan: "Could not scan this menu.",
+        cameraHold: "Camera ready. Hold the menu inside the frame, then tap Capture & Read.",
+        cameraUnavailable: "Camera unavailable. Use Upload Photo instead.",
+        cameraAlert: "Could not open the camera. On localhost, allow camera permission or use Upload Photo.",
+        capturing: "Capturing menu...",
+        preparingUpload: "Preparing uploaded menu photo...",
+        passwordMismatch: "Passwords do not match.",
+        signinFailed: "Sign in failed.",
+        sheetSigninError: "Could not reach Google Sheets. Check your Apps Script deployment and try again.",
+        createFailed: "Could not create account.",
+        sheetSaveError: "Could not save to Google Sheets. Check your Apps Script deployment and try again.",
+        photoAlt: name => `Photo of ${name}`,
+        previewAlt: name => `AI generated preview of ${name}`,
+        ocrDetected: name => `OCR detected menu item from: "${name}"`,
+        detectedIngredient: "Detected from the scanned menu text. Confirm details with restaurant staff."
+      },
+      zh: {
+        tagline: "走到哪里都看懂菜单",
+        lead: "扫描餐厅菜单，查看菜品图片，并快速检查食材。",
+        signup: "注册",
+        signin: "登录",
+        guest: "游客继续",
+        pointMenu: "对准菜单",
+        instantPreview: "即时查看菜品预览和食材检查。",
+        createAccount: "创建账户",
+        savePrefsReopen: "保存偏好，之后可重新打开菜单。",
+        email: "邮箱",
+        password: "密码",
+        confirmPassword: "确认密码",
+        minPassword: "至少 8 个字符",
+        reenterPassword: "再次输入密码",
+        createAccountButton: "创建账户",
+        quickDecisions: "为餐厅内快速决策而设计",
+        companion: "你的菜单助手",
+        companionCopy: "DishLens 帮你快速查看食材风险、营养信息和易懂的菜品说明。",
+        welcomeBack: "欢迎回来",
+        openSaved: "打开你保存的餐厅和菜品。",
+        yourPassword: "你的密码",
+        forgotPassword: "忘记密码？",
+        backWelcome: "返回欢迎页",
+        savedReady: "偏好已准备好",
+        savedReadyCopy: "系统会根据你的过敏和饮食偏好，在点餐前标记风险菜品。",
+        prefsTitle: "过敏与饮食偏好",
+        prefsCopy: "选择 DishLens 需要帮你留意的内容。",
+        skip: "跳过",
+        allergies: "过敏原",
+        dietPrefs: "饮食偏好",
+        savePreferences: "保存偏好",
+        scanMenu: "扫描菜单",
+        scanCopy: "适合昏暗餐桌和忙碌用餐场景的快速扫描。",
+        account: "账户",
+        searchHistory: "搜索历史",
+        cameraReadyInitial: "点击“扫描菜单”打开相机。",
+        uploadPhoto: "上传照片",
+        lensReady: "镜头就绪",
+        currentProfile: "当前档案",
+        noRestrictions: "还没有保存限制。",
+        recentScan: "最近扫描",
+        recentScanCopy: "Mercado Verde，巴塞罗那。点击扫描查看翻译后的菜单卡片。",
+        resultsCopy: "已翻译的西班牙语菜单，并附带食材检查。",
+        searchDish: "搜索菜品",
+        allergyFilters: "过敏筛选",
+        active: "已启用",
+        hideUnsafe: "隐藏不适合的菜品",
+        dishDetail: "菜品详情",
+        detailCopy: "点餐前先了解食材。",
+        ingredients: "食材",
+        nutrition: "营养",
+        saveDish: "保存菜品",
+        history: "历史",
+        historyCopy: "保存的餐厅和菜品。",
+        searchSaved: "搜索保存内容",
+        savedRestaurants: "保存的餐厅",
+        savedDishes: "保存的菜品",
+        reopen: "重新打开",
+        delete: "删除",
+        safeFilters: "符合当前筛选",
+        viewDetails: "查看详情",
+        saveToHistory: "保存到历史",
+        noDishMatches: "没有符合搜索和筛选条件的菜品。",
+        noRestaurants: "没有找到保存的餐厅。",
+        noDishes: "保存的菜品会显示在这里。",
+        allergyRisk: "过敏风险",
+        dietConflict: "饮食冲突",
+        noConflicts: "未发现与当前过敏或饮食筛选冲突。",
+        askBeforeOrdering: "点餐前请向餐厅确认。",
+        calories: "热量",
+        protein: "蛋白质",
+        carbs: "碳水",
+        fat: "脂肪",
+        preferences: "偏好",
+        noAllergies: "未保存过敏原",
+        noPrefs: "未保存饮食偏好",
+        saved: "已保存",
+        signingIn: "正在登录...",
+        saving: "正在保存...",
+        scanning: "正在扫描...",
+        openingCamera: "正在打开相机...",
+        captureRead: "拍照并识别",
+        sharpening: "正在增强菜单文字...",
+        readingMenu: "正在读取菜单",
+        readingAgain: "再次读取菜单",
+        alternateOcr: "正在尝试另一种 OCR 布局...",
+        matchingPhotos: "正在匹配菜品图片...",
+        noClearDishesStatus: "未找到清晰菜名，显示示例菜单。",
+        ocrNoDishes: "OCR 已完成，但没有找到清晰菜名。请尝试更清晰或更明亮的照片。",
+        foundItems: count => `找到 ${count} 个菜单项。`,
+        ocrFailed: "OCR 失败，显示示例菜单。",
+        couldNotScan: "无法扫描这张菜单。",
+        cameraHold: "相机已就绪。请把菜单放入框内，然后点击“拍照并识别”。",
+        cameraUnavailable: "相机不可用。请改用上传照片。",
+        cameraAlert: "无法打开相机。在 localhost 中请允许相机权限，或使用上传照片。",
+        capturing: "正在拍摄菜单...",
+        preparingUpload: "正在准备上传的菜单照片...",
+        passwordMismatch: "两次输入的密码不一致。",
+        signinFailed: "登录失败。",
+        sheetSigninError: "无法连接 Google Sheets。请检查 Apps Script 部署后重试。",
+        createFailed: "无法创建账户。",
+        sheetSaveError: "无法保存到 Google Sheets。请检查 Apps Script 部署后重试。",
+        photoAlt: name => `${name} 的照片`,
+        previewAlt: name => `${name} 的生成预览图`,
+        ocrDetected: name => `OCR 识别到的菜单项：“${name}”`,
+        detectedIngredient: "由扫描菜单文字检测得出。请向餐厅工作人员确认。"
+      }
+    };
+    const termLabels = {
+      zh: {
+        Nuts: "坚果",
+        Dairy: "乳制品",
+        Gluten: "麸质",
+        Shellfish: "贝壳类海鲜",
+        Soy: "大豆",
+        Vegetarian: "素食",
+        Vegan: "纯素",
+        Halal: "清真",
+        Kosher: "犹太洁食",
+        "Low calorie": "低卡"
+      },
+      en: {}
+    };
+    const dishNameLabels = {
+      "Paella Marina": "海鲜西班牙烩饭",
+      "Gnocchi Verde": "青酱意式面疙瘩",
+      "Tagine Zaytoon": "橄榄塔吉锅",
+      "Miso Nasu": "味噌茄子",
+      "Pollo Mole": "墨西哥摩雷鸡",
+      "Basil Beef Fried Rice": "罗勒牛肉炒饭",
+      "Isaan Sausage Fried Rice": "依善香肠炒饭",
+      "Pineapple Fried Rice": "菠萝炒饭",
+      "Soft-Shell Crab Fried Rice": "软壳蟹炒饭",
+      "Coconut Pandan Rice": "椰香斑兰饭",
+      "Sticky Rice": "糯米饭"
+    };
+    const ingredientLabels = {
+      "Bomba rice": "邦巴米",
+      Shrimp: "虾",
+      Mussels: "贻贝",
+      Saffron: "藏红花",
+      Sofrito: "索夫里托酱底",
+      Gnocchi: "意式面疙瘩",
+      "Basil cream": "罗勒奶油",
+      Parmigiano: "帕玛森奶酪",
+      "Pine nuts": "松子",
+      Spinach: "菠菜",
+      Chickpeas: "鹰嘴豆",
+      "Preserved lemon": "腌柠檬",
+      "Green olives": "青橄榄",
+      "Ras el hanout": "摩洛哥综合香料",
+      Carrots: "胡萝卜",
+      Eggplant: "茄子",
+      Miso: "味噌",
+      Sesame: "芝麻",
+      "Steamed rice": "蒸米饭",
+      Scallions: "青葱",
+      Chicken: "鸡肉",
+      Mole: "摩雷酱",
+      Cacao: "可可",
+      "Corn tortillas": "玉米饼",
+      Rice: "米饭",
+      Beef: "牛肉",
+      Basil: "罗勒",
+      Prawns: "明虾",
+      Crab: "蟹",
+      Crabmeat: "蟹肉",
+      Onion: "洋葱",
+      Cashew: "腰果",
+      Pineapple: "菠萝",
+      Egg: "鸡蛋",
+      Cream: "奶油",
+      Butter: "黄油",
+      Cheese: "奶酪",
+      Garlic: "大蒜",
+      Pepper: "辣椒",
+      Lemon: "柠檬",
+      Tofu: "豆腐",
+      Noodles: "面条",
+      Pasta: "意面",
+      Wheat: "小麦",
+      Fish: "鱼",
+      Nuts: "坚果",
+      Beans: "豆类"
+    };
     const state = {
+      language: "en",
       pendingSignup: null,
       currentUserEmail: "",
       cameraStream: null,
@@ -1163,6 +1521,164 @@
       shell: '<svg viewBox="0 0 24 24"><path d="M4 18c2-8 6-12 8-12s6 4 8 12"/><path d="M4 18h16"/><path d="M12 6v12"/><path d="M7 15l10-7"/><path d="M17 15 7 8"/></svg>',
       leaf: '<svg viewBox="0 0 24 24"><path d="M20 4c-8 1-13 5-14 12 7 1 12-3 14-12Z"/><path d="M6 16c2-3 5-5 9-7"/></svg>'
     };
+
+    function t(key, ...args) {
+      const value = translations[state.language][key] || translations.en[key] || key;
+      return typeof value === "function" ? value(...args) : value;
+    }
+
+    function labelTerm(value) {
+      return termLabels[state.language][value] || value;
+    }
+
+    function labelList(values) {
+      return values.map(labelTerm).join(state.language === "zh" ? "、" : ", ");
+    }
+
+    function translateDishName(name) {
+      if (state.language !== "zh") return name;
+      const exact = dishNameLabels[name];
+      if (exact) return exact;
+      const matchedKey = Object.keys(dishNameLabels).find(key => name.toLowerCase().startsWith(key.toLowerCase()));
+      if (matchedKey) return dishNameLabels[matchedKey];
+      return name;
+    }
+
+    function translateIngredientName(name) {
+      if (state.language !== "zh") return name;
+      return ingredientLabels[name] || ingredientLabels[titleCase(name)] || name;
+    }
+
+    function dishNameMarkup(dish, level = "h3") {
+      const translated = translateDishName(dish.name);
+      if (state.language !== "zh" || translated === dish.name) return `<${level}>${dish.name}</${level}>`;
+      return `<${level}>${translated}<span class="english-name">${dish.name}</span></${level}>`;
+    }
+
+    function ingredientMarkup(name) {
+      const translated = translateIngredientName(name);
+      if (state.language !== "zh" || translated === name) return name;
+      return `${translated}<span class="ingredient-original">${name}</span>`;
+    }
+
+    function translateDescription(text) {
+      if (state.language !== "zh") return text;
+      let output = text;
+      const replacements = [
+        ["Hommali Rice", "泰国香米"],
+        ["Tossed with Grilled Beef Flank", "搭配烤牛腹肉翻炒"],
+        ["Tossed with Fermented Sausage", "搭配发酵香肠翻炒"],
+        ["with Prawns", "配明虾"],
+        ["Pineapple", "菠萝"],
+        ["Cashew Nut", "腰果"],
+        ["Onion", "洋葱"],
+        ["Scallions", "青葱"],
+        ["Raisins", "葡萄干"],
+        ["Egg", "鸡蛋"],
+        ["Curry Powder", "咖喱粉"],
+        ["Fresh Crabmeat", "新鲜蟹肉"],
+        ["Soft-Shell Crab", "软壳蟹"],
+        ["Basil", "罗勒"],
+        ["Fresno", "弗雷斯诺辣椒"],
+        ["Chili", "辣椒"]
+      ];
+      replacements.forEach(([source, target]) => {
+        output = output.replace(new RegExp(source, "gi"), target);
+      });
+      return output;
+    }
+
+    function setText(selector, value) {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = value;
+    }
+
+    function setPlaceholder(selector, value) {
+      const element = document.querySelector(selector);
+      if (!element) return;
+      element.placeholder = value;
+      element.setAttribute("aria-label", value);
+    }
+
+    function setLabelText(selector, value) {
+      const label = document.querySelector(selector);
+      if (!label) return;
+      const textNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+      if (textNode) textNode.textContent = `${value} `;
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = state.language === "zh" ? "zh-Hans" : "en";
+      document.querySelectorAll("[data-lang]").forEach(button => {
+        button.classList.toggle("active", button.dataset.lang === state.language);
+      });
+
+      setText(".tagline", t("tagline"));
+      setText(".lead", t("lead"));
+      setText('[data-go="signup"]', t("signup"));
+      setText('[data-go="signin"]', t("signin"));
+      setText('[data-go="scan"].secondary', t("guest"));
+      setText(".camera-card strong", t("pointMenu"));
+      setText(".camera-card .muted", t("instantPreview"));
+      setText("#signup-title", t("createAccount"));
+      setText("#signup-title + .muted", t("savePrefsReopen"));
+      setLabelText("#signup-form label:nth-child(1)", t("email"));
+      setLabelText("#signup-form label:nth-child(2)", t("password"));
+      setLabelText("#signup-form label:nth-child(3)", t("confirmPassword"));
+      setText("#signup-form button", t("createAccountButton"));
+      setText("#signup .status-pill", t("quickDecisions"));
+      setText("#signup .panel h3", t("companion"));
+      setText("#signup .panel .muted", t("companionCopy"));
+      setText("#signin-title", t("welcomeBack"));
+      setText("#signin-title + .muted", t("openSaved"));
+      setLabelText("#signin-form label:nth-child(1)", t("email"));
+      setLabelText("#signin-form label:nth-child(2)", t("password"));
+      setText("#signin-form button", t("signin"));
+      setText(".helper-link", t("forgotPassword"));
+      setText('[data-go="welcome"].helper-link', t("backWelcome"));
+      setText("#signin .panel h3", t("savedReady"));
+      setText("#signin .panel .muted", t("savedReadyCopy"));
+      setText("#prefs-title", t("prefsTitle"));
+      setText("#prefs-title + .muted", t("prefsCopy"));
+      setText("#preferences .btn.ghost", t("skip"));
+      setText("#preferences .panel:nth-child(1) h3", t("allergies"));
+      setText("#preferences .panel:nth-child(2) h3", t("dietPrefs"));
+      setText("#save-preferences", t("savePreferences"));
+      setText("#scan-title", t("scanMenu"));
+      setText("#scan-title + .muted", t("scanCopy"));
+      setText("#scan .topbar .btn", t("account"));
+      setText("#camera-status", t("cameraReadyInitial"));
+      setText("#scan-menu", t("scanMenu"));
+      setText("#upload-photo", t("uploadPhoto"));
+      setText("#scan .status-pill", t("lensReady"));
+      setText("#scan .side-note h3:nth-of-type(1)", t("currentProfile"));
+      setText("#scan .side-note h3:nth-of-type(2)", t("recentScan"));
+      setText("#scan .side-note h3:nth-of-type(2) + .muted", t("recentScanCopy"));
+      setText("#results-title + .muted", t("resultsCopy"));
+      setText("#filter-panel .panel-title-row h3", t("allergyFilters"));
+      setText("#filter-panel .badge", t("active"));
+      setText("#filter-panel .toggle-row:last-child span:first-child", t("hideUnsafe"));
+      setText("#detail-title", t("dishDetail"));
+      setText("#detail-title + .muted", t("detailCopy"));
+      setText("#detail .detail-panel h3:nth-of-type(1)", t("ingredients"));
+      setText("#detail .detail-panel h3:nth-of-type(2)", t("nutrition"));
+      setText("#save-detail", t("saveDish"));
+      setText("#history-title", t("history"));
+      setText("#history-title + .muted", t("historyCopy"));
+      setText("#history .panel:nth-child(1) h3", t("savedRestaurants"));
+      setText("#history .panel:nth-child(2) h3", t("savedDishes"));
+      setPlaceholder("#history-search-top", t("searchHistory"));
+      setPlaceholder("#dish-search", t("searchDish"));
+      setPlaceholder("#history-search", t("searchSaved"));
+      setPlaceholder('#signup-form input[type="password"]', t("minPassword"));
+      setPlaceholder("#signup-form label:nth-child(3) input", t("reenterPassword"));
+      setPlaceholder("#signin-form input[type='password']", t("yourPassword"));
+      renderPreferenceSetup();
+      updateProfileSummary();
+      if (document.querySelector("#results").classList.contains("active")) renderDishes();
+      if (document.querySelector("#detail").classList.contains("active")) renderDetail();
+      if (document.querySelector("#history").classList.contains("active")) renderHistory();
+    }
 
     const dishes = [
       {
@@ -1275,7 +1791,7 @@
     }
 
     function imageAltText(dish) {
-      return dish.imageUrl ? `Photo of ${dish.name}` : `AI generated preview of ${dish.name}`;
+      return dish.imageUrl ? t("photoAlt", translateDishName(dish.name)) : t("previewAlt", translateDishName(dish.name));
     }
 
     function go(screenId) {
@@ -1379,7 +1895,7 @@
     }
 
     async function attachDishImages(menuDishes, showStatus = false) {
-      if (showStatus) setCameraStatus("Matching dish photos...");
+      if (showStatus) setCameraStatus(t("matchingPhotos"));
       const enriched = await Promise.all(menuDishes.map(async dish => {
         if (state.imageCache.has(dish.name)) {
           const imageUrl = state.imageCache.get(dish.name);
@@ -1540,12 +2056,12 @@
         throw new Error("OCR library is still loading. Try again in a moment.");
       }
 
-      setCameraStatus("Sharpening menu text...");
+      setCameraStatus(t("sharpening"));
       const preparedImage = await preprocessForOcr(imageSource);
       const result = await Tesseract.recognize(preparedImage, "eng", {
         logger: progress => {
           if (progress.status === "recognizing text") {
-            setCameraStatus(`Reading menu... ${Math.round(progress.progress * 100)}%`);
+            setCameraStatus(`${t("readingMenu")}... ${Math.round(progress.progress * 100)}%`);
           } else if (progress.status) {
             setCameraStatus(progress.status.replace(/_/g, " "));
           }
@@ -1559,11 +2075,11 @@
       const weakLines = text.split(/\n+/).filter(line => /[A-Za-z]/.test(line)).length;
 
       if (weakLines < 3) {
-        setCameraStatus("Trying alternate OCR layout...");
+        setCameraStatus(t("alternateOcr"));
         const fallback = await Tesseract.recognize(preparedImage, "eng", {
           logger: progress => {
             if (progress.status === "recognizing text") {
-              setCameraStatus(`Reading menu again... ${Math.round(progress.progress * 100)}%`);
+              setCameraStatus(`${t("readingAgain")}... ${Math.round(progress.progress * 100)}%`);
             }
           },
           tessedit_pageseg_mode: "4",
@@ -1604,7 +2120,7 @@
       const value = text.toLowerCase();
       const found = known.filter(item => value.includes(item)).slice(0, 6);
       return (found.length ? found : text.split(/\s+/).filter(word => word.length > 4).slice(0, 5))
-        .map(item => [titleCase(item), "Detected from the scanned menu text. Confirm details with restaurant staff."]);
+        .map(item => [titleCase(item), t("detectedIngredient")]);
     }
 
     function normalizeOcrLine(line) {
@@ -1662,7 +2178,7 @@
         calories,
         description: item.description
           ? titleCase(item.description).slice(0, 112)
-          : `OCR detected menu item from: "${item.name.slice(0, 86)}"`,
+          : t("ocrDetected", item.name.slice(0, 86)),
         allergies: allergiesFound,
         ingredients: guessIngredients(fullText),
         nutrition: {
@@ -1712,7 +2228,7 @@
 
     async function scanImageSource(imageSource) {
       const scanButton = document.querySelector("#scan-menu");
-      setButtonBusy(scanButton, "Scanning...");
+      setButtonBusy(scanButton, t("scanning"));
       try {
         const text = await runOcr(imageSource);
         state.lastOcrText = text;
@@ -1720,23 +2236,23 @@
 
         if (!parsed.length) {
           state.scannedDishes = null;
-          setCameraStatus("Could not find clear dish names. Showing sample menu.");
-          alert("OCR finished, but no clear dish names were found. Try a sharper photo or brighter lighting.");
+          setCameraStatus(t("noClearDishesStatus"));
+          alert(t("ocrNoDishes"));
         } else {
           state.scannedDishes = await attachDishImages(parsed, true);
-          setCameraStatus(`Found ${state.scannedDishes.length} menu items.`);
+          setCameraStatus(t("foundItems", state.scannedDishes.length));
         }
 
         stopCamera();
         go("results");
       } catch (error) {
         state.scannedDishes = null;
-        setCameraStatus("OCR failed. Showing sample menu.");
-        alert(error.message || "Could not scan this menu.");
+        setCameraStatus(t("ocrFailed"));
+        alert(error.message || t("couldNotScan"));
         go("results");
       } finally {
         clearButtonBusy(scanButton);
-        scanButton.textContent = "Scan Menu";
+        scanButton.textContent = t("scanMenu");
         scanButton.disabled = false;
       }
     }
@@ -1745,21 +2261,21 @@
       const button = document.querySelector("#scan-menu");
 
       if (!state.cameraReady) {
-        setButtonBusy(button, "Opening camera...");
+        setButtonBusy(button, t("openingCamera"));
         try {
           await startCamera();
-          setCameraStatus("Camera ready. Hold the menu inside the frame, then tap Capture & Read.");
-          button.textContent = "Capture & Read";
+          setCameraStatus(t("cameraHold"));
+          button.textContent = t("captureRead");
           button.disabled = false;
         } catch (error) {
           clearButtonBusy(button);
-          setCameraStatus("Camera unavailable. Use Upload Photo instead.");
-          alert("Could not open the camera. On localhost, allow camera permission or use Upload Photo.");
+          setCameraStatus(t("cameraUnavailable"));
+          alert(t("cameraAlert"));
         }
         return;
       }
 
-      setCameraStatus("Capturing menu...");
+      setCameraStatus(t("capturing"));
       await scanImageSource(captureCameraFrame());
     }
 
@@ -1767,12 +2283,12 @@
       const allergyOptions = document.querySelector("#allergy-options");
       allergyOptions.innerHTML = allergies.map(item => {
         const iconSvg = item === "Nuts" ? icon.nut : item === "Dairy" ? icon.milk : item === "Gluten" ? icon.grain : item === "Shellfish" ? icon.shell : icon.leaf;
-        return `<label class="check-tile"><span class="tile-icon inline-icon">${iconSvg}</span>${item}<input type="checkbox" data-allergy="${item}" ${state.allergies.has(item) ? "checked" : ""}></label>`;
+        return `<label class="check-tile"><span class="tile-icon inline-icon">${iconSvg}</span>${labelTerm(item)}<input type="checkbox" data-allergy="${item}" ${state.allergies.has(item) ? "checked" : ""}></label>`;
       }).join("");
 
       document.querySelector("#diet-options").innerHTML = diets.map(item => `
         <label class="toggle-row">
-          <span>${item}</span>
+          <span>${labelTerm(item)}</span>
           <span class="switch"><input type="checkbox" data-diet="${item}" ${state.diets.has(item) ? "checked" : ""}><span class="slider"></span></span>
         </label>
       `).join("");
@@ -1781,21 +2297,21 @@
     function renderFilters() {
       const allergyFilters = allergies.map(item => `
         <label class="toggle-row">
-          <span>${item}</span>
+          <span>${labelTerm(item)}</span>
           <span class="switch"><input type="checkbox" data-filter="${item}" ${state.filters.has(item) ? "checked" : ""}><span class="slider"></span></span>
         </label>
       `).join("");
       const dietFilterRows = diets.map(item => `
         <label class="toggle-row">
-          <span>${item}</span>
+          <span>${labelTerm(item)}</span>
           <span class="switch"><input type="checkbox" data-diet-filter="${item}" ${state.dietFilters.has(item) ? "checked" : ""}><span class="slider"></span></span>
         </label>
       `).join("");
 
       document.querySelector("#filter-options").innerHTML = `
-        <h3>Allergies</h3>
+        <h3>${t("allergies")}</h3>
         ${allergyFilters}
-        <h3 style="margin-top:22px;">Dietary Preferences</h3>
+        <h3 style="margin-top:22px;">${t("dietPrefs")}</h3>
         ${dietFilterRows}
       `;
       document.querySelector("#hide-unsafe").checked = state.hideUnsafe;
@@ -1808,7 +2324,9 @@
       const menuDishes = state.scannedDishes || dishes;
       hydrateVisibleDishImages(menuDishes);
       const visible = menuDishes.filter(dish => {
-        const matches = !query || dish.name.toLowerCase().includes(query) || dish.description.toLowerCase().includes(query);
+        const translatedName = translateDishName(dish.name).toLowerCase();
+        const translatedDescription = translateDescription(dish.description).toLowerCase();
+        const matches = !query || dish.name.toLowerCase().includes(query) || translatedName.includes(query) || dish.description.toLowerCase().includes(query) || translatedDescription.includes(query);
         const safety = safetyFor(dish);
         const unsafe = safety.allergies.length > 0 || safety.diets.length > 0;
         return matches && !(state.hideUnsafe && unsafe);
@@ -1817,27 +2335,27 @@
       list.innerHTML = visible.length ? visible.map(dish => {
         const safety = safetyFor(dish);
         const warnings = [
-          ...safety.allergies.map(item => `Allergy risk: ${item}`),
-          ...safety.diets.map(item => `Diet conflict: ${item}`)
+          ...safety.allergies.map(item => `${t("allergyRisk")}: ${labelTerm(item)}`),
+          ...safety.diets.map(item => `${t("dietConflict")}: ${labelTerm(item)}`)
         ];
         return `
           <article class="dish-card">
             <img class="dish-thumb" src="${displayDishImage(dish)}" alt="${imageAltText(dish)}" style="background-image:url('${dishImage(dish)}');background-size:cover;background-position:center;">
             <div>
-              <h3>${dish.name}</h3>
+              ${dishNameMarkup(dish)}
               <div class="dish-meta">
                 <span>~${dish.calories} kcal</span>
-                ${warnings.length ? `<span class="badge risk">${warnings.join(" | ")}</span>` : `<span class="badge safe">Safe for active filters</span>`}
+                ${warnings.length ? `<span class="badge risk">${warnings.join(" | ")}</span>` : `<span class="badge safe">${t("safeFilters")}</span>`}
               </div>
-              <p class="muted" style="margin-bottom:0;">${dish.description}</p>
+              <p class="muted" style="margin-bottom:0;">${translateDescription(dish.description)}</p>
               <div class="card-actions">
-                <button class="btn small" data-detail="${dish.id}">View Details</button>
-                <button class="btn secondary small" data-save-dish="${dish.id}">Save to History</button>
+                <button class="btn small" data-detail="${dish.id}">${t("viewDetails")}</button>
+                <button class="btn secondary small" data-save-dish="${dish.id}">${t("saveToHistory")}</button>
               </div>
             </div>
           </article>
         `;
-      }).join("") : `<div class="empty-state">No dishes match your search and filter settings.</div>`;
+      }).join("") : `<div class="empty-state">${t("noDishMatches")}</div>`;
     }
 
     async function hydrateVisibleDishImages(menuDishes) {
@@ -1872,24 +2390,24 @@
         detailImage.src = dishImage(dish, true);
         detailImage.alt = `AI generated preview of ${dish.name}`;
       };
-      document.querySelector("#detail-title").textContent = dish.name;
-      document.querySelector("#detail-name").textContent = dish.name;
+      document.querySelector("#detail-title").textContent = translateDishName(dish.name);
+      document.querySelector("#detail-name").outerHTML = dishNameMarkup(dish, "h2").replace("<h2>", '<h2 id="detail-name" style="font-size:2rem;">');
       document.querySelector("#detail-cuisine").textContent = dish.cuisine;
       document.querySelector("#detail-calories").textContent = `~${dish.calories} kcal`;
       const riskBox = document.querySelector("#detail-risk");
       const dietRisk = dietConflictsFor(dish);
       riskBox.classList.toggle("warning", risk.length > 0 || dietRisk.length > 0);
       riskBox.textContent = risk.length || dietRisk.length
-        ? `${risk.length ? `Allergy warning: ${risk.join(", ")}. ` : ""}${dietRisk.length ? `Dietary conflict: ${dietRisk.join(", ")}. ` : ""}Ask the restaurant before ordering.`
-        : "No conflicts found with your active allergy or dietary filters.";
+        ? `${risk.length ? `${t("allergyRisk")}: ${labelList(risk)}. ` : ""}${dietRisk.length ? `${t("dietConflict")}: ${labelList(dietRisk)}. ` : ""}${t("askBeforeOrdering")}`
+        : t("noConflicts");
       document.querySelector("#ingredient-list").innerHTML = dish.ingredients.map(([name, tip]) =>
-        `<button class="ingredient" ${tip ? `data-tip="${tip}"` : ""}>${name}</button>`
+        `<button class="ingredient" ${tip ? `data-tip="${tip}"` : ""}>${ingredientMarkup(name)}</button>`
       ).join("");
       document.querySelector("#nutrition-grid").innerHTML = [
-        ["Calories", `${dish.calories}`],
-        ["Protein", dish.nutrition.Protein],
-        ["Carbs", dish.nutrition.Carbs],
-        ["Fat", dish.nutrition.Fat]
+        [t("calories"), `${dish.calories}`],
+        [t("protein"), dish.nutrition.Protein],
+        [t("carbs"), dish.nutrition.Carbs],
+        [t("fat"), dish.nutrition.Fat]
       ].map(([label, value]) => `<div class="nutrition-item"><strong>${value}</strong><span class="muted">${label}</span></div>`).join("");
     }
 
@@ -1909,23 +2427,23 @@
             <strong>${item.name}</strong>
             <p class="muted" style="margin:4px 0 0;">${item.place} - ${item.date}</p>
           </div>
-          <button class="btn small" data-go="results">Reopen</button>
+          <button class="btn small" data-go="results">${t("reopen")}</button>
         </article>
-      `).join("") : `<div class="empty-state">No saved restaurants found.</div>`;
+      `).join("") : `<div class="empty-state">${t("noRestaurants")}</div>`;
       document.querySelector("#dish-history").innerHTML = savedDishes.length ? savedDishes.map(item => `
         <article class="history-card">
           <div>
             <strong>${item.name}</strong>
             <p class="muted" style="margin:4px 0 0;">${item.restaurant} - ~${item.calories} kcal</p>
           </div>
-          <button class="btn secondary small" data-delete-dish="${item.id}">Delete</button>
+          <button class="btn secondary small" data-delete-dish="${item.id}">${t("delete")}</button>
         </article>
-      `).join("") : `<div class="empty-state">Saved dishes will appear here.</div>`;
+      `).join("") : `<div class="empty-state">${t("noDishes")}</div>`;
     }
 
     function updateProfileSummary() {
-      const allergyText = state.allergies.size ? `Allergies: ${[...state.allergies].join(", ")}` : "No allergies saved";
-      const dietText = state.diets.size ? `Preferences: ${[...state.diets].join(", ")}` : "No dietary preferences saved";
+      const allergyText = state.allergies.size ? `${t("allergies")}: ${labelList([...state.allergies])}` : t("noAllergies");
+      const dietText = state.diets.size ? `${t("preferences")}: ${labelList([...state.diets])}` : t("noPrefs");
       document.querySelector("#profile-summary").textContent = `${allergyText}. ${dietText}.`;
     }
 
@@ -1942,7 +2460,7 @@
       const saveTarget = event.target.closest("[data-save-dish]");
       if (saveTarget) {
         saveDish(saveTarget.dataset.saveDish);
-        saveTarget.textContent = "Saved";
+        saveTarget.textContent = t("saved");
       }
 
       const deleteTarget = event.target.closest("[data-delete-dish]");
@@ -1958,7 +2476,7 @@
       const [emailInput, passwordInput, confirmInput] = form.querySelectorAll("input");
 
       if (passwordInput.value !== confirmInput.value) {
-        alert("Passwords do not match.");
+        alert(t("passwordMismatch"));
         return;
       }
 
@@ -1976,7 +2494,7 @@
       const button = form.querySelector("button");
       const [emailInput, passwordInput] = form.querySelectorAll("input");
 
-      setButtonBusy(button, "Signing in...");
+      setButtonBusy(button, t("signingIn"));
       try {
         const result = await sendToSheet({
           action: "signin",
@@ -1985,7 +2503,7 @@
         });
 
         if (!result.ok) {
-          alert(result.message || "Sign in failed.");
+          alert(result.message || t("signinFailed"));
           return;
         }
 
@@ -1993,7 +2511,7 @@
         applySheetPreferences(result);
         go("scan");
       } catch (error) {
-        alert("Could not reach Google Sheets. Check your Apps Script deployment and try again.");
+        alert(t("sheetSigninError"));
       } finally {
         clearButtonBusy(button);
       }
@@ -2012,7 +2530,7 @@
         return;
       }
 
-      setButtonBusy(button, "Saving...");
+      setButtonBusy(button, t("saving"));
       try {
         const result = await sendToSheet({
           action: "signup",
@@ -2022,14 +2540,14 @@
         });
 
         if (!result.ok) {
-          alert(result.message || "Could not create account.");
+          alert(result.message || t("createFailed"));
           return;
         }
 
         state.pendingSignup = null;
         go("scan");
       } catch (error) {
-        alert("Could not save to Google Sheets. Check your Apps Script deployment and try again.");
+        alert(t("sheetSaveError"));
       } finally {
         clearButtonBusy(button);
       }
@@ -2040,7 +2558,7 @@
     document.querySelector("#menu-photo-input").addEventListener("change", async event => {
       const file = event.target.files[0];
       if (!file) return;
-      setCameraStatus("Preparing uploaded menu photo...");
+      setCameraStatus(t("preparingUpload"));
       const imageSource = await loadImageFile(file);
       await scanImageSource(imageSource);
       event.target.value = "";
@@ -2068,11 +2586,19 @@
     });
     document.querySelector("#save-detail").addEventListener("click", event => {
       saveDish(state.currentDish.id);
-      event.target.textContent = "Saved";
+      event.target.textContent = t("saved");
+    });
+
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.language = button.dataset.lang;
+        applyLanguage();
+      });
     });
 
     renderPreferenceSetup();
     updateProfileSummary();
+    applyLanguage();
   </script>
 </body>
 </html>
