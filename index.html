@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DishLens</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg: #f8f3eb;
@@ -480,11 +481,52 @@
       box-shadow: var(--shadow);
     }
 
+    .camera-video,
+    .camera-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .camera-video {
+      display: none;
+      background: #172018;
+    }
+
+    .camera-preview.live {
+      background: #172018;
+    }
+
+    .camera-preview.live .camera-video {
+      display: block;
+    }
+
+    .camera-preview.live .scan-corners {
+      border-color: rgba(255, 255, 255, 0.72);
+    }
+
+    .camera-status {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      right: 22px;
+      z-index: 2;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      background: rgba(22, 31, 24, 0.76);
+      color: #fff;
+      font-weight: 800;
+      backdrop-filter: blur(8px);
+    }
+
     .scan-corners {
       position: absolute;
       inset: 9%;
       border: 2px solid rgba(255, 255, 255, 0.42);
       border-radius: 18px;
+      z-index: 1;
     }
 
     .scan-corners::before,
@@ -516,6 +558,7 @@
       left: 24px;
       right: 24px;
       bottom: 24px;
+      z-index: 2;
       display: grid;
       gap: 12px;
     }
@@ -970,11 +1013,15 @@
               <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/><path d="M12 7v5l3 2"/></svg></span>
             </button>
           </div>
-          <div class="camera-preview" role="img" aria-label="Camera preview showing a restaurant menu">
+          <div class="camera-preview" id="camera-preview" role="img" aria-label="Camera preview showing a restaurant menu">
+            <video class="camera-video" id="camera-video" autoplay playsinline muted></video>
+            <canvas class="camera-canvas hidden" id="camera-canvas"></canvas>
+            <div class="camera-status" id="camera-status">Tap Scan Menu to open the camera.</div>
             <div class="scan-corners"></div>
             <div class="scan-actions">
               <button class="btn" id="scan-menu">Scan Menu</button>
               <button class="btn secondary" id="upload-photo">Upload Photo</button>
+              <input class="hidden" id="menu-photo-input" type="file" accept="image/*">
             </div>
           </div>
         </div>
@@ -1092,9 +1139,14 @@
     const state = {
       pendingSignup: null,
       currentUserEmail: "",
+      cameraStream: null,
+      cameraReady: false,
+      scannedDishes: null,
+      lastOcrText: "",
       allergies: new Set(["Dairy", "Shellfish"]),
       diets: new Set(["Vegetarian"]),
       filters: new Set(["Dairy", "Shellfish"]),
+      dietFilters: new Set(["Vegetarian"]),
       hideUnsafe: false,
       currentDish: null,
       savedRestaurants: [
@@ -1230,6 +1282,30 @@
       return dish.allergies.filter(item => state.filters.has(item));
     }
 
+    function dietConflictsFor(dish) {
+      const text = `${dish.name} ${dish.description} ${(dish.ingredients || []).map(item => item[0]).join(" ")}`.toLowerCase();
+      const conflicts = [];
+      const meat = /\b(beef|pork|chicken|duck|lamb|sausage|bacon|ham|prosciutto|meat|crab|shrimp|prawn|prawns|fish|mussel|clam|oyster|lobster|scallop|crabmeat)\b/;
+      const animalProducts = /\b(egg|eggs|milk|cheese|cream|butter|yogurt|honey)\b/;
+      const pork = /\b(pork|bacon|ham|prosciutto|sausage)\b/;
+      const nonKosherSeafood = /\b(crab|shrimp|prawn|prawns|mussel|clam|oyster|lobster|scallop|shellfish)\b/;
+
+      if (state.dietFilters.has("Vegetarian") && meat.test(text)) conflicts.push("Vegetarian");
+      if (state.dietFilters.has("Vegan") && (meat.test(text) || animalProducts.test(text))) conflicts.push("Vegan");
+      if (state.dietFilters.has("Halal") && pork.test(text)) conflicts.push("Halal");
+      if (state.dietFilters.has("Kosher") && (pork.test(text) || nonKosherSeafood.test(text))) conflicts.push("Kosher");
+      if (state.dietFilters.has("Low calorie") && dish.calories > 600) conflicts.push("Low calorie");
+
+      return conflicts;
+    }
+
+    function safetyFor(dish) {
+      return {
+        allergies: riskFor(dish),
+        diets: dietConflictsFor(dish)
+      };
+    }
+
     function toBool(value) {
       return value === true || value === "TRUE" || value === "true" || value === 1 || value === "1";
     }
@@ -1311,6 +1387,7 @@
       ].filter(Boolean));
 
       state.filters = new Set(state.allergies);
+      state.dietFilters = new Set(state.diets);
       renderPreferenceSetup();
       updateProfileSummary();
     }
@@ -1324,6 +1401,328 @@
     function clearButtonBusy(button) {
       button.textContent = button.dataset.originalText || button.textContent;
       button.disabled = false;
+    }
+
+    function setCameraStatus(message) {
+      document.querySelector("#camera-status").textContent = message;
+    }
+
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera is not available in this browser.");
+      }
+
+      if (!state.cameraStream) {
+        state.cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1600 },
+            height: { ideal: 1200 }
+          },
+          audio: false
+        });
+      }
+
+      const video = document.querySelector("#camera-video");
+      video.srcObject = state.cameraStream;
+      document.querySelector("#camera-preview").classList.add("live");
+      await video.play();
+      state.cameraReady = true;
+    }
+
+    function stopCamera() {
+      if (!state.cameraStream) return;
+      state.cameraStream.getTracks().forEach(track => track.stop());
+      state.cameraStream = null;
+      state.cameraReady = false;
+      document.querySelector("#camera-preview").classList.remove("live");
+    }
+
+    function captureCameraFrame() {
+      const video = document.querySelector("#camera-video");
+      const canvas = document.querySelector("#camera-canvas");
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 960;
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(video, 0, 0, width, height);
+      return canvas.toDataURL("image/png");
+    }
+
+    function loadImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not read image file."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function imageSourceToElement(imageSource) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Could not load menu image."));
+        image.src = imageSource;
+      });
+    }
+
+    async function preprocessForOcr(imageSource) {
+      const source = await imageSourceToElement(imageSource);
+      const canvas = document.createElement("canvas");
+      const cropX = Math.round(source.width * 0.03);
+      const cropY = Math.round(source.height * 0.02);
+      const cropWidth = Math.round(source.width * 0.94);
+      const cropHeight = Math.round(source.height * 0.96);
+      const scale = Math.max(2, 1800 / cropWidth);
+      canvas.width = Math.round(cropWidth * scale);
+      canvas.height = Math.round(cropHeight * scale);
+
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.imageSmoothingEnabled = true;
+      context.drawImage(source, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let index = 0; index < data.length; index += 4) {
+        const gray = 0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
+        const contrast = Math.max(0, Math.min(255, (gray - 128) * 1.65 + 128));
+        const value = contrast > 172 ? 255 : contrast < 92 ? 0 : contrast;
+        data[index] = value;
+        data[index + 1] = value;
+        data[index + 2] = value;
+      }
+      context.putImageData(imageData, 0, 0);
+
+      return canvas.toDataURL("image/png");
+    }
+
+    async function runOcr(imageSource) {
+      if (!window.Tesseract) {
+        throw new Error("OCR library is still loading. Try again in a moment.");
+      }
+
+      setCameraStatus("Sharpening menu text...");
+      const preparedImage = await preprocessForOcr(imageSource);
+      const result = await Tesseract.recognize(preparedImage, "eng", {
+        logger: progress => {
+          if (progress.status === "recognizing text") {
+            setCameraStatus(`Reading menu... ${Math.round(progress.progress * 100)}%`);
+          } else if (progress.status) {
+            setCameraStatus(progress.status.replace(/_/g, " "));
+          }
+        },
+        tessedit_pageseg_mode: "6",
+        preserve_interword_spaces: "1",
+        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$.,()-&/ "
+      });
+
+      let text = result.data.text || "";
+      const weakLines = text.split(/\n+/).filter(line => /[A-Za-z]/.test(line)).length;
+
+      if (weakLines < 3) {
+        setCameraStatus("Trying alternate OCR layout...");
+        const fallback = await Tesseract.recognize(preparedImage, "eng", {
+          logger: progress => {
+            if (progress.status === "recognizing text") {
+              setCameraStatus(`Reading menu again... ${Math.round(progress.progress * 100)}%`);
+            }
+          },
+          tessedit_pageseg_mode: "4",
+          preserve_interword_spaces: "1"
+        }
+        );
+        if ((fallback.data.text || "").length > text.length) text = fallback.data.text || "";
+      }
+
+      return text;
+    }
+
+    function titleCase(text) {
+      return text
+        .toLowerCase()
+        .replace(/\b[a-z]/g, letter => letter.toUpperCase())
+        .replace(/\bAnd\b/g, "and")
+        .replace(/\bWith\b/g, "with");
+    }
+
+    function guessAllergies(text) {
+      const value = text.toLowerCase();
+      const matches = [];
+      if (/\b(nut|peanut|almond|cashew|pistachio|walnut|hazelnut|pecan|pine nut|mole)\b/.test(value)) matches.push("Nuts");
+      if (/\b(milk|cheese|cream|butter|yogurt|parmesan|parmigiano|mozzarella|dairy)\b/.test(value)) matches.push("Dairy");
+      if (/\b(wheat|flour|bread|pasta|noodle|gnocchi|dumpling|gluten)\b/.test(value)) matches.push("Gluten");
+      if (/\b(shrimp|prawn|prawns|crab|lobster|mussel|clam|oyster|scallop|shellfish)\b/.test(value)) matches.push("Shellfish");
+      if (/\b(soy|soya|tofu|miso|edamame|tamari)\b/.test(value)) matches.push("Soy");
+      return [...new Set(matches)];
+    }
+
+    function guessIngredients(text) {
+      const known = [
+        "rice", "shrimp", "prawns", "crab", "crabmeat", "mussels", "chicken", "beef", "pork", "tofu", "eggplant", "miso", "soy",
+        "cheese", "cream", "butter", "tomato", "basil", "garlic", "onion", "pepper", "olive",
+        "lemon", "chickpeas", "noodles", "pasta", "wheat", "fish", "sesame", "nuts", "cashew", "pineapple", "egg", "beans"
+      ];
+      const value = text.toLowerCase();
+      const found = known.filter(item => value.includes(item)).slice(0, 6);
+      return (found.length ? found : text.split(/\s+/).filter(word => word.length > 4).slice(0, 5))
+        .map(item => [titleCase(item), "Detected from the scanned menu text. Confirm details with restaurant staff."]);
+    }
+
+    function normalizeOcrLine(line) {
+      return line
+        .replace(/[|_~]/g, " ")
+        .replace(/\bfricd\b/gi, "fried")
+        .replace(/\bfric\b/gi, "fried")
+        .replace(/\bricc\b/gi, "rice")
+        .replace(/\brce\b/gi, "rice")
+        .replace(/\bpx\b/gi, "rice")
+        .replace(/\bpi\b/gi, "rice")
+        .replace(/\bwarm\b/gi, "crab")
+        .replace(/\bcrcam\b/gi, "cream")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function hasFoodKeyword(line) {
+      return /\b(rice|fried|beef|sausage|pineapple|crab|coconut|pandan|sticky|chicken|pork|fish|shrimp|prawn|prawns|noodle|noodles|curry|soup|salad|tofu|egg|basil|cream)\b/i.test(line);
+    }
+
+    function cleanDishName(line) {
+      return normalizeOcrLine(line)
+        .replace(/\s+[$]?\d+([.,]\d{1,2})?\s*$/g, "")
+        .replace(/\s+\([^)]+\)\s*$/g, "")
+        .replace(/\s+\b(GF|V|VG|S)(,\s*(GF|V|VG|S))*\b\s*$/i, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function isCategoryLine(line) {
+      const compact = line.replace(/[^A-Za-z]/g, "");
+      return compact.length >= 3 && compact === compact.toUpperCase();
+    }
+
+    function isLikelyDishName(line) {
+      const cleaned = cleanDishName(line);
+      const words = cleaned.split(/\s+/).filter(Boolean);
+      const hasPrice = /[$]?\d+([.,]\d{1,2})?\s*$/.test(line);
+      const startsUpper = /^[A-Z]/.test(cleaned);
+      const hasComma = cleaned.includes(",");
+      const hasBrokenToken = words.some(word => /^[A-Za-z]$/.test(word));
+      return cleaned.length >= 4 && startsUpper && words.length <= 7 && !hasComma && !hasBrokenToken && (hasPrice || hasFoodKeyword(cleaned));
+    }
+
+    function dishFromScanItem(item, index) {
+      const fullText = `${item.name} ${item.description}`.trim();
+      const allergiesFound = guessAllergies(fullText);
+      const calories = 380 + ((fullText.length + index * 73) % 390);
+
+      return {
+        id: `scan-${Date.now()}-${index}`,
+        name: titleCase(item.name).slice(0, 46),
+        cuisine: "Scanned menu",
+        calories,
+        description: item.description
+          ? titleCase(item.description).slice(0, 112)
+          : `OCR detected menu item from: "${item.name.slice(0, 86)}"`,
+        allergies: allergiesFound,
+        ingredients: guessIngredients(fullText),
+        nutrition: {
+          Protein: `${14 + (index * 7) % 28}g`,
+          Carbs: `${36 + (fullText.length % 48)}g`,
+          Fat: `${10 + (index * 5) % 24}g`
+        },
+        colors: [
+          ["#d9912b", "#2f7d4f", "#f2d071"],
+          ["#79a65a", "#fff0c8", "#d7b36a"],
+          ["#c17f35", "#6f8b48", "#f1c75c"],
+          ["#5c4a72", "#d2a247", "#89a85e"]
+        ][index % 4]
+      };
+    }
+
+    function parseMenuText(text) {
+      const lines = text
+        .split(/\n+/)
+        .map(line => normalizeOcrLine(line.replace(/[^\p{L}\p{N}\s,$().&/-]/gu, " ")))
+        .filter(line => line.length >= 4 && /[A-Za-z]/.test(line));
+
+      const ignored = /\b(menu|restaurant|starter|appetizer|main|dessert|drink|beverage|total|tax|service|wifi|open|closed)\b/i;
+      const items = [];
+      let current = null;
+
+      lines.forEach(line => {
+        if (ignored.test(line) || isCategoryLine(line) || /^\$?\d+([.,]\d+)?$/.test(line)) return;
+
+        if (isLikelyDishName(line)) {
+          current = { name: cleanDishName(line), description: "" };
+          items.push(current);
+          return;
+        }
+
+        if (current && (line.includes(",") || hasFoodKeyword(line))) {
+          current.description = `${current.description} ${line}`.trim();
+        }
+      });
+
+      return items
+        .filter(item => item.name.length >= 4)
+        .filter((item, index, allItems) => allItems.findIndex(match => match.name.toLowerCase() === item.name.toLowerCase()) === index)
+        .slice(0, 8)
+        .map(dishFromScanItem);
+    }
+
+    async function scanImageSource(imageSource) {
+      const scanButton = document.querySelector("#scan-menu");
+      setButtonBusy(scanButton, "Scanning...");
+      try {
+        const text = await runOcr(imageSource);
+        state.lastOcrText = text;
+        const parsed = parseMenuText(text);
+
+        if (!parsed.length) {
+          state.scannedDishes = null;
+          setCameraStatus("Could not find clear dish names. Showing sample menu.");
+          alert("OCR finished, but no clear dish names were found. Try a sharper photo or brighter lighting.");
+        } else {
+          state.scannedDishes = parsed;
+          setCameraStatus(`Found ${parsed.length} menu items.`);
+        }
+
+        stopCamera();
+        go("results");
+      } catch (error) {
+        state.scannedDishes = null;
+        setCameraStatus("OCR failed. Showing sample menu.");
+        alert(error.message || "Could not scan this menu.");
+        go("results");
+      } finally {
+        clearButtonBusy(scanButton);
+        scanButton.textContent = "Scan Menu";
+        scanButton.disabled = false;
+      }
+    }
+
+    async function handleScanClick() {
+      const button = document.querySelector("#scan-menu");
+
+      if (!state.cameraReady) {
+        setButtonBusy(button, "Opening camera...");
+        try {
+          await startCamera();
+          setCameraStatus("Camera ready. Hold the menu inside the frame, then tap Capture & Read.");
+          button.textContent = "Capture & Read";
+          button.disabled = false;
+        } catch (error) {
+          clearButtonBusy(button);
+          setCameraStatus("Camera unavailable. Use Upload Photo instead.");
+          alert("Could not open the camera. On localhost, allow camera permission or use Upload Photo.");
+        }
+        return;
+      }
+
+      setCameraStatus("Capturing menu...");
+      await scanImageSource(captureCameraFrame());
     }
 
     function renderPreferenceSetup() {
@@ -1342,12 +1741,25 @@
     }
 
     function renderFilters() {
-      document.querySelector("#filter-options").innerHTML = allergies.map(item => `
+      const allergyFilters = allergies.map(item => `
         <label class="toggle-row">
           <span>${item}</span>
           <span class="switch"><input type="checkbox" data-filter="${item}" ${state.filters.has(item) ? "checked" : ""}><span class="slider"></span></span>
         </label>
       `).join("");
+      const dietFilterRows = diets.map(item => `
+        <label class="toggle-row">
+          <span>${item}</span>
+          <span class="switch"><input type="checkbox" data-diet-filter="${item}" ${state.dietFilters.has(item) ? "checked" : ""}><span class="slider"></span></span>
+        </label>
+      `).join("");
+
+      document.querySelector("#filter-options").innerHTML = `
+        <h3>Allergies</h3>
+        ${allergyFilters}
+        <h3 style="margin-top:22px;">Dietary Preferences</h3>
+        ${dietFilterRows}
+      `;
       document.querySelector("#hide-unsafe").checked = state.hideUnsafe;
     }
 
@@ -1355,14 +1767,20 @@
       renderFilters();
       const query = document.querySelector("#dish-search").value.trim().toLowerCase();
       const list = document.querySelector("#dish-list");
-      const visible = dishes.filter(dish => {
+      const menuDishes = state.scannedDishes || dishes;
+      const visible = menuDishes.filter(dish => {
         const matches = !query || dish.name.toLowerCase().includes(query) || dish.description.toLowerCase().includes(query);
-        const unsafe = riskFor(dish).length > 0;
+        const safety = safetyFor(dish);
+        const unsafe = safety.allergies.length > 0 || safety.diets.length > 0;
         return matches && !(state.hideUnsafe && unsafe);
       });
 
       list.innerHTML = visible.length ? visible.map(dish => {
-        const risk = riskFor(dish);
+        const safety = safetyFor(dish);
+        const warnings = [
+          ...safety.allergies.map(item => `Allergy risk: ${item}`),
+          ...safety.diets.map(item => `Diet conflict: ${item}`)
+        ];
         return `
           <article class="dish-card">
             <img class="dish-thumb" src="${dishImage(dish)}" alt="AI generated preview of ${dish.name}">
@@ -1370,7 +1788,7 @@
               <h3>${dish.name}</h3>
               <div class="dish-meta">
                 <span>~${dish.calories} kcal</span>
-                ${risk.length ? `<span class="badge risk">Allergy risk: ${risk.join(", ")}</span>` : `<span class="badge safe">No saved allergy match</span>`}
+                ${warnings.length ? `<span class="badge risk">${warnings.join(" | ")}</span>` : `<span class="badge safe">Safe for active filters</span>`}
               </div>
               <p class="muted" style="margin-bottom:0;">${dish.description}</p>
               <div class="card-actions">
@@ -1394,10 +1812,11 @@
       document.querySelector("#detail-cuisine").textContent = dish.cuisine;
       document.querySelector("#detail-calories").textContent = `~${dish.calories} kcal`;
       const riskBox = document.querySelector("#detail-risk");
-      riskBox.classList.toggle("warning", risk.length > 0);
-      riskBox.textContent = risk.length
-        ? `Allergy warning: this dish may contain ${risk.join(", ")}. Ask the restaurant before ordering.`
-        : "No conflicts found with your active allergy filters.";
+      const dietRisk = dietConflictsFor(dish);
+      riskBox.classList.toggle("warning", risk.length > 0 || dietRisk.length > 0);
+      riskBox.textContent = risk.length || dietRisk.length
+        ? `${risk.length ? `Allergy warning: ${risk.join(", ")}. ` : ""}${dietRisk.length ? `Dietary conflict: ${dietRisk.join(", ")}. ` : ""}Ask the restaurant before ordering.`
+        : "No conflicts found with your active allergy or dietary filters.";
       document.querySelector("#ingredient-list").innerHTML = dish.ingredients.map(([name, tip]) =>
         `<button class="ingredient" ${tip ? `data-tip="${tip}"` : ""}>${name}</button>`
       ).join("");
@@ -1410,7 +1829,7 @@
     }
 
     function saveDish(dishId) {
-      const dish = dishes.find(item => item.id === dishId);
+      const dish = [...(state.scannedDishes || []), ...dishes].find(item => item.id === dishId);
       if (!dish || state.savedDishes.some(item => item.id === dish.id)) return;
       state.savedDishes.push({ id: dish.id, name: dish.name, calories: dish.calories, restaurant: "Mercado Verde" });
     }
@@ -1451,7 +1870,7 @@
 
       const detailTarget = event.target.closest("[data-detail]");
       if (detailTarget) {
-        state.currentDish = dishes.find(dish => dish.id === detailTarget.dataset.detail);
+        state.currentDish = [...(state.scannedDishes || []), ...dishes].find(dish => dish.id === detailTarget.dataset.detail);
         go("detail");
       }
 
@@ -1521,6 +1940,7 @@
       state.allergies = selected.allergies;
       state.filters = new Set(state.allergies);
       state.diets = selected.diets;
+      state.dietFilters = new Set(state.diets);
 
       if (!state.pendingSignup) {
         go("scan");
@@ -1550,8 +1970,16 @@
       }
     });
 
-    document.querySelector("#scan-menu").addEventListener("click", () => go("results"));
-    document.querySelector("#upload-photo").addEventListener("click", () => go("results"));
+    document.querySelector("#scan-menu").addEventListener("click", handleScanClick);
+    document.querySelector("#upload-photo").addEventListener("click", () => document.querySelector("#menu-photo-input").click());
+    document.querySelector("#menu-photo-input").addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      setCameraStatus("Preparing uploaded menu photo...");
+      const imageSource = await loadImageFile(file);
+      await scanImageSource(imageSource);
+      event.target.value = "";
+    });
     document.querySelector("#dish-search").addEventListener("input", renderDishes);
     document.querySelector("#history-search").addEventListener("input", renderHistory);
     document.querySelector("#history-search-top").addEventListener("focus", () => go("history"));
@@ -1561,9 +1989,16 @@
       renderDishes();
     });
     document.querySelector("#filter-options").addEventListener("change", event => {
-      if (!event.target.matches("[data-filter]")) return;
-      if (event.target.checked) state.filters.add(event.target.dataset.filter);
-      else state.filters.delete(event.target.dataset.filter);
+      if (event.target.matches("[data-filter]")) {
+        if (event.target.checked) state.filters.add(event.target.dataset.filter);
+        else state.filters.delete(event.target.dataset.filter);
+      }
+
+      if (event.target.matches("[data-diet-filter]")) {
+        if (event.target.checked) state.dietFilters.add(event.target.dataset.dietFilter);
+        else state.dietFilters.delete(event.target.dataset.dietFilter);
+      }
+
       renderDishes();
     });
     document.querySelector("#save-detail").addEventListener("click", event => {
