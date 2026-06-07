@@ -1143,6 +1143,7 @@
       cameraReady: false,
       scannedDishes: null,
       lastOcrText: "",
+      imageCache: new Map(),
       allergies: new Set(["Dairy", "Shellfish"]),
       diets: new Set(["Vegetarian"]),
       filters: new Set(["Dairy", "Shellfish"]),
@@ -1269,6 +1270,14 @@
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
 
+    function displayDishImage(dish, large = false) {
+      return dish.imageUrl || dishImage(dish, large);
+    }
+
+    function imageAltText(dish) {
+      return dish.imageUrl ? `Photo of ${dish.name}` : `AI generated preview of ${dish.name}`;
+    }
+
     function go(screenId) {
       screens.forEach(screen => screen.classList.toggle("active", screen.id === screenId));
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1367,6 +1376,35 @@
         script.src = url.toString();
         document.body.appendChild(script);
       });
+    }
+
+    async function attachDishImages(menuDishes, showStatus = false) {
+      if (showStatus) setCameraStatus("Matching dish photos...");
+      const enriched = await Promise.all(menuDishes.map(async dish => {
+        if (state.imageCache.has(dish.name)) {
+          const imageUrl = state.imageCache.get(dish.name);
+          return imageUrl ? { ...dish, imageUrl } : dish;
+        }
+
+        try {
+          const result = await sendToSheet({
+            action: "dishImage",
+            dish_name: dish.name
+          });
+
+          if (result.ok && result.image_url) {
+            state.imageCache.set(dish.name, result.image_url);
+            return { ...dish, imageUrl: result.image_url };
+          }
+        } catch (error) {
+          console.warn(`No image match loaded for ${dish.name}`, error);
+        }
+
+        state.imageCache.set(dish.name, "");
+        return dish;
+      }));
+
+      return enriched;
     }
 
     function applySheetPreferences(data) {
@@ -1685,8 +1723,8 @@
           setCameraStatus("Could not find clear dish names. Showing sample menu.");
           alert("OCR finished, but no clear dish names were found. Try a sharper photo or brighter lighting.");
         } else {
-          state.scannedDishes = parsed;
-          setCameraStatus(`Found ${parsed.length} menu items.`);
+          state.scannedDishes = await attachDishImages(parsed, true);
+          setCameraStatus(`Found ${state.scannedDishes.length} menu items.`);
         }
 
         stopCamera();
@@ -1768,6 +1806,7 @@
       const query = document.querySelector("#dish-search").value.trim().toLowerCase();
       const list = document.querySelector("#dish-list");
       const menuDishes = state.scannedDishes || dishes;
+      hydrateVisibleDishImages(menuDishes);
       const visible = menuDishes.filter(dish => {
         const matches = !query || dish.name.toLowerCase().includes(query) || dish.description.toLowerCase().includes(query);
         const safety = safetyFor(dish);
@@ -1783,7 +1822,7 @@
         ];
         return `
           <article class="dish-card">
-            <img class="dish-thumb" src="${dishImage(dish)}" alt="AI generated preview of ${dish.name}">
+            <img class="dish-thumb" src="${displayDishImage(dish)}" alt="${imageAltText(dish)}" style="background-image:url('${dishImage(dish)}');background-size:cover;background-position:center;">
             <div>
               <h3>${dish.name}</h3>
               <div class="dish-meta">
@@ -1801,12 +1840,38 @@
       }).join("") : `<div class="empty-state">No dishes match your search and filter settings.</div>`;
     }
 
+    async function hydrateVisibleDishImages(menuDishes) {
+      const needsImages = menuDishes.filter(dish => !dish.imageUrl && !state.imageCache.has(dish.name));
+      if (!needsImages.length) return;
+
+      const enriched = await attachDishImages(needsImages);
+      let changed = false;
+      enriched.forEach(match => {
+        if (!match.imageUrl) return;
+        const target = menuDishes.find(dish => dish.id === match.id);
+        if (target) {
+          target.imageUrl = match.imageUrl;
+          changed = true;
+        }
+      });
+
+      if (changed && document.querySelector("#results").classList.contains("active")) {
+        renderDishes();
+      }
+    }
+
     function renderDetail() {
       const dish = state.currentDish || dishes[0];
       state.currentDish = dish;
       const risk = riskFor(dish);
-      document.querySelector("#detail-image").src = dishImage(dish, true);
-      document.querySelector("#detail-image").alt = `AI generated hero image of ${dish.name}`;
+      const detailImage = document.querySelector("#detail-image");
+      detailImage.src = displayDishImage(dish, true);
+      detailImage.alt = imageAltText(dish);
+      detailImage.onerror = () => {
+        detailImage.onerror = null;
+        detailImage.src = dishImage(dish, true);
+        detailImage.alt = `AI generated preview of ${dish.name}`;
+      };
       document.querySelector("#detail-title").textContent = dish.name;
       document.querySelector("#detail-name").textContent = dish.name;
       document.querySelector("#detail-cuisine").textContent = dish.cuisine;
